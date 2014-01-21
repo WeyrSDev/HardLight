@@ -11,7 +11,6 @@ float getAngle(sf::Vector2f v)
     float tn = std::atan2(-v.y, v.x);
     if (tn < 0.f) tn += 2.f * pi;
     return tn;
-    //    return (180.f / (pi))*(tn);
 }
 
 float getAngle2(sf::Vector2f v, float ref)
@@ -82,8 +81,6 @@ void ShadowWorld::update()
             float max = min;
             unsigned i1 = 0u, i2 = 0u;
 
-            refangle = ref;
-
             for (int i = 0; i < poly.size(); ++i)
             {
                 const float b = getAngle2(poly[i] - light -> m_pos, ref);
@@ -110,7 +107,7 @@ void ShadowWorld::update()
             shadow.push_back(poly[i1]);
 
             unsigned i = i1;
-
+            
             while (i != i2)
             {
                 i = (i + 1u) % poly.size();
@@ -130,7 +127,6 @@ void ShadowWorld::update()
 
             shadow.push_back(poly[i2] + fly2);
             shadow.push_back(poly[i1] + fly1);
-
 
         }//for poly
     }//for light

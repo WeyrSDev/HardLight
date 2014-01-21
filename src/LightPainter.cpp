@@ -3,6 +3,7 @@
 #include <polyclipping/clipper.hpp>
 #include <SFML/Graphics/Shape.hpp>
 #include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/Shader.hpp>
 #include "LightPainter.hpp"
 #include "ShadowWorld.hpp"
 #include "DebugGeometryPainter.hpp"
@@ -11,61 +12,14 @@ namespace ee {
 
 namespace clip = ClipperLib;
 
+
+sf::Shader * GLOBAL_shader = nullptr;
+
 void LightPainter::setSize(unsigned x, unsigned y)
 {
-    m_lighttex.create(x, y);
     m_sumtex.create(x, y);
-}
-
-void LightPainter::render(ShadowWorld& w)
-{
-    std::fprintf(stderr, "WARNING: naive 2x render tex impl used\n");
-    m_sumtex.clear(sf::Color::Black);
-
-    for (const std::unique_ptr<Light>& l : w.m_lights)
-    {
-        const bool b = false;
-
-        if (b)
-        {
-            DebugGeometryPainter dgp(m_sumtex);
-            dgp.getStates().blendMode = sf::BlendAdd;
-
-            auto col = l->getColor();
-            col.a = 0u;
-            dgp.softCircle(l->getPosition(), l->getRadius(), l->getColor(), col, l->getAngle(), l->getSpread());
-
-            //definitely context switching is the culprit
-            //m_lighttex.clear();
-            //m_lighttex.display();
-
-        }
-        else
-        {
-            m_lighttex.clear(sf::Color::Black);
-            DebugGeometryPainter paint(m_lighttex);
-
-            sf::Color edge = l->getColor();
-            edge.a = 0u;
-            paint.softCircle(l->getPosition(), l->getRadius(), l->getColor(), edge, l->getAngle(), l->getSpread());
-
-            for (const std::vector<sf::Vector2f>& s : l->m_shadows)
-            {
-                //                paint.polygon(s.data(), s.size(), sf::Color::Black);
-
-                DebugGeometryPainter p2(m_sumtex);
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-                {
-                    paint.polygon(s.data(), s.size(), sf::Color::Blue);
-                }
-            }
-
-            m_lighttex.display();
-            m_sumtex.draw(sf::Sprite(m_lighttex.getTexture()), sf::BlendAdd);
-        }
-    }//for each light
-
-    m_sumtex.display();
+    m_frag.loadFromFile("light.frag", sf::Shader::Fragment);
+    GLOBAL_shader = &m_frag;
 }
 
 namespace {
@@ -74,7 +28,7 @@ const float scale = 1000.f * 1000.f;
 
 clip::IntPoint point(sf::Vector2f v)
 {
-    return clip::IntPoint(v.x*scale, v.y * scale);
+    return clip::IntPoint(v.x * scale, v.y * scale);
 }
 
 sf::Vector2f point(clip::IntPoint v)
@@ -119,140 +73,96 @@ clip::Polygon circl(sf::Vector2f v, float r)
     return translate(mid);
 }
 
+sf::Color lerpColor(sf::Color c1, sf::Color c2, float lerpval)
+{
+    if (lerpval >= 1.f) return c2;
+
+    //LINEAR INTERPOLATION
+
+    const float r = lerpval * (c2.r - c1.r);
+    const float g = lerpval * (c2.g - c1.g);
+    const float b = lerpval * (c2.b - c1.b);
+    const float a = lerpval * (c2.a - c1.a);
+
+    c1.r += r;
+    c1.g += g;
+    c1.b += b;
+    c1.a += a;
+
+    return c1;
 }
 
-void LightPainter::renderViaClipper(ShadowWorld& w)
+float getLen2(sf::Vector2f v1, sf::Vector2f v2)
+{
+    const sf::Vector2f v(v2 - v1);
+    return v.x * v.x + v.y * v.y;
+}
+
+float getLen(sf::Vector2f v1, sf::Vector2f v2)
+{
+    return std::sqrt(getLen2(v1, v2));
+}
+
+void drawBlendedLight(sf::RenderTarget& t, sf::Vector2f m, float radius,
+const sf::Vector2f * p, unsigned len, sf::Color c, sf::Color o)
+{
+    sf::VertexArray arr(sf::TrianglesFan, len + 2u);
+    arr[0].position = m;
+    arr[0].color = c;
+
+    for (unsigned i = 0; i < len; ++i)
+    {
+        arr[i + 1u].position = p[i];
+        //arr[i + 1u].color = lerpColor(c, o, getLen(m, p[i]) / radius);
+        arr[i + 1u].color = c;
+        arr[i + 1u].texCoords = p[i] - m;
+    }
+
+    arr[len + 1u] = arr[1];
+
+    sf::RenderStates states;
+    states.blendMode = sf::BlendAdd;
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) states.shader = GLOBAL_shader;
+    GLOBAL_shader->setParameter("radius", radius);
+    t.draw(arr, states);
+}
+
+}
+
+void LightPainter::render(ShadowWorld& w)
 {
     m_sumtex.clear();
+    DebugGeometryPainter paint(m_sumtex);
+    paint.getStates().blendMode = sf::BlendAdd;
 
-    const bool dbug = sf::Keyboard::isKeyPressed(sf::Keyboard::D);
-
-    //    static_assert(false, "readme");
-    //something is wrong with overlapping shadows in else branch
-    //check it out
-    //possibly it's PolygonFillType issue?
-
-    if (dbug)
+    clip::Clipper clip;
+    for (const std::unique_ptr<Light>& l : w.m_lights)
     {
-        //something is wrong here, shadows are right but clip result is not?
+        clip.Clear();
 
-        DebugGeometryPainter paint(m_sumtex);
-        paint.getStates().blendMode = sf::BlendAdd;
-
-        clip::Clipper clip;
-        //    clip.AddPath(,,);
-        for (const std::unique_ptr<Light>& l : w.m_lights)
+        for (const auto& v : l->m_shadows)
         {
-            clip::Polygons out(1);
-            out[0] = circl(l->getPosition(), l->getRadius());
-            clip.Clear();
+            clip.AddPolygon(translate(v), clip::ptClip);
+        }//for poly
 
-            int count = 0;
-            const sf::Color c[3] = {sf::Color::Red, sf::Color::Green, sf::Color::Blue};
+        clip.AddPolygon(circl(l->getPosition(), l->getRadius()), clip::ptSubject);
 
-            for (const auto& v : l->m_shadows)
-            {
-                if (out.size() > 0u)
-                {
-                    clip.Clear();
-                    clip.AddPolygons(out, clip::ptSubject);
-                    clip.AddPolygon(translate(v), clip::ptClip);
-                    clip.Execute(clip::ctDifference, out);
-                }
-                if (out.size() > 0u && count < 3 && sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
-                {
-                    auto poly = translate(out[0]);
-                    paint.polygon(poly.data(), poly.size(), c[count]);
-                }
-                ++count;
-            }//for poly
+        clip::Polygons out;
+        clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
 
-            light = translate(out[0]);
-
-            if (out.size() > 0u)
-            {
-                //            clip::CleanPolygon(out[0]);
-                auto poly = translate(out[0]);
-                paint.polygonCenter(l->getPosition(), poly.data(), poly.size());
-            }
-        }//for light
-    }
-    else//test new approach
-    {
-        //something is wrong here, shadows are right but clip result is not?
-
-        DebugGeometryPainter paint(m_sumtex);
-        paint.getStates().blendMode = sf::BlendAdd;
-
-        clip::Clipper clip;
-        //    clip.AddPath(,,);
-        for (const std::unique_ptr<Light>& l : w.m_lights)
+        if (out.size() > 0u)
         {
-            clip.Clear();
+            const auto poly = translate(out[0]);
+            //paint.polygonCenter(l->getPosition(), poly.data(), poly.size());
+            sf::Color out = l->getColor();
+            out.a = 0u;
+            drawBlendedLight(m_sumtex, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor(), out);
 
-            for (const auto& v : l->m_shadows)
-            {
-                clip.AddPolygon(translate(v), clip::ptClip);
-            }//for poly
-
-            clip.AddPolygon(circl(l->getPosition(), l->getRadius()), clip::ptSubject);
-
-
-            clip::PolyFillType pft;
-
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
-            {
-                pft = clip::pftEvenOdd;
-            }
-            else
-            {
-                pft = clip::pftNonZero;
-            }
-
-            clip::Polygons out;
-            clip.Execute(clip::ctDifference, out, pft, pft);
-
-            if (out.size() > 0u)
-            {
-                const auto poly = translate(out[0]);
-                paint.polygonCenter(l->getPosition(), poly.data(), poly.size());
-            }
-        }//for light
-    }//end if
+        }
+    }//for light
 
     m_sumtex.display();
 }
-
-//m_sumtex.clear();
-//
-////something is wrong here, shadows are right but clip result is not?
-//
-//DebugGeometryPainter paint(m_sumtex);
-//paint.getStates().blendMode = sf::BlendAdd;
-//
-//clip::Clipper clip;
-////    clip.AddPath(,,);
-//for (const std::unique_ptr<Light>& l : w.m_lights)
-//{
-//    clip.Clear();
-//
-//    for (const auto& v : l->m_shadows)
-//    {
-//        clip.AddPolygon(translate(v), clip::ptClip);
-//    }//for poly
-//
-//    clip.AddPolygon(circl(l->getPosition(), l->getRadius()), clip::ptSubject);
-//
-//    clip::Polygons out;
-//    clip.Execute(clip::ctDifference, out);
-//
-//    if (out.size() > 0u)
-//    {
-//        const auto poly = translate(out[0]);
-//        paint.polygonCenter(l->getPosition(), poly.data(), poly.size());
-//    }
-//}//for light
-//
-//m_sumtex.display();
 
 }

@@ -31,12 +31,7 @@ public:
 
 
     //private:
-
-    float refangle;
-    
     std::vector<std::vector<sf::Vector2f> > m_polys;
-
-
 
     std::vector<std::unique_ptr<Light> > m_lights;
 

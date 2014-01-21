@@ -27,52 +27,6 @@ void makeHex(std::vector<sf::Vector2f>& poly, sf::Vector2f p)
     }
 }
 
-sf::Color getCol()
-{
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
-    {
-        return sf::Color::Red;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::G))
-    {
-        return sf::Color::Green;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
-    {
-        return sf::Color::Blue;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::H))
-    {
-        return sf::Color::Black;
-    }
-    else
-    {
-        return sf::Color::White;
-    }
-}
-
-sf::Vector2f getLaurentianCenter(const std::vector<sf::Vector2f>& v)
-{
-    if (v.size() == 0) return sf::Vector2f();
-
-    float minx = v[0].x;
-    float maxx = v[0].x;
-
-    float miny = v[0].y;
-    float maxy = v[0].y;
-
-    for (const sf::Vector2f p : v)
-    {
-        minx = std::min(p.x, minx);
-        maxx = std::max(p.x, maxx);
-
-        miny = std::min(p.y, miny);
-        maxy = std::max(p.y, maxy);
-    }
-
-    return sf::Vector2f((minx + maxx) / 2.f, (miny + maxy) / 2.f);
-}
-
 int main()
 {
     sf::RenderWindow app(sf::VideoMode(640u, 480u), "lights");
@@ -85,32 +39,24 @@ int main()
 
     ee::Light * lit = shw.addLight({0.f, 0.f}, 200.f);
 
-    lit->setColor(sf::Color::Red);
+    lit->setColor(sf::Color::Yellow);
 
+    const float off = 2.f;
     std::vector<sf::Vector2f> pl;
     pl.push_back(sf::Vector2f(300.f, 300.f));
     pl.push_back(sf::Vector2f(500.f, 300.f));
-    //    pl.push_back(sf::Vector2f(500.f, 300.f - off));
-    //    pl.push_back(sf::Vector2f(300.f, 300.f - off));
-
+    pl.push_back(sf::Vector2f(500.f, 300.f - off));
+    pl.push_back(sf::Vector2f(300.f, 300.f - off));
 
     shw.m_polys.push_back(pl);
-    //#warning "ReadMe"
-    //FOR LINES IT STILL FAILS AT TIMES, MAKE SEPARATE ALGO?
-
-    //    static_assert(false, "10+ lights lag the algo, perf it");
 
     int count = 0;
 
     const int frames = 30;
 
-    float angle = 0.f;
-
     while (app.isOpen())
     {
-        angle += ee::pi2 / 360.f;
-
-
+        ++count;
         sf::Clock clo;
 
         sf::Event eve;
@@ -136,74 +82,38 @@ int main()
                 shw.m_polys.clear();
             }
 
-
-
             if (eve.type == sf::Event::MouseWheelMoved)
             {
                 lit->setRadius(lit->getRadius() + eve.mouseWheel.delta);
             }
-        }
+        }//while pollEvent
 
         if (true || sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
-            //200.f * sf::Vector2f(std::cos(angle), -std::sin(angle)) +
             lit->setPosition(sf::Vector2f(sf::Mouse::getPosition(app)));
         }
 
         shw.update();
 
         sf::Clock clo2;
-
-        //        lp.render(shw);
-        lp.renderViaClipper(shw);
-
-        ++count;
-
-        if (count % frames == 0)
-        {
-            std::printf("shadow %f ", 60.f * clo2.getElapsedTime().asSeconds());
-        }
-
+        lp.render(shw);
+        if (count % frames == 0) std::printf("shadow %f ", 60.f * clo2.getElapsedTime().asSeconds());
 
         app.clear();
-
-        app.draw(sf::Sprite(lp.m_sumtex.getTexture()));
-
-
-
-        sf::RectangleShape sha;
-        sha.setSize({1000.f, 1000.f});
-        sha.setFillColor(getCol());
-        app.draw(sha, sf::BlendMode::BlendMultiply);
-
-
-
+        app.draw(sf::Sprite(lp.getCanvas()));
 
         const sf::Vector2f mousepos(sf::Mouse::getPosition(app));
 
-        const sf::Vector2f vz2 = mousepos +
-        100.f * sf::Vector2f(std::cos(shw.refangle), -std::sin(shw.refangle));
-
-        //        gp.halfLine(mousepos, vz2, sf::Color::Red);
-
-        //static_assert(false,"scanline is wrong");
-        const auto laurent = getLaurentianCenter(lp.light);
-
-        for (const auto v : lp.light)
-        {
-            //gp.halfLine(laurent, v, sf::Color::Red);
-            //gp.segment(lit->getPosition(), v, sf::Color::Red);
-        }
-
         for (const std::vector<sf::Vector2f>& v : shw.m_polys)
         {
-            gp.polygon(v.data(), v.size(), sf::Color(255u, 0u, 0u, 127u));
-
-            for (const sf::Vector2f p : v)
+            if (v.size() == 2u)
             {
-                //gp.halfLine(sf::Vector2f(sf::Mouse::getPosition(app)), p);
+                gp.segment(v[0], v[1], sf::Color(255u, 0u, 0u, 127u));
             }
-
+            else
+            {
+                gp.polygon(v.data(), v.size(), sf::Color(255u, 0u, 0u, 127u));
+            }
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
@@ -216,23 +126,11 @@ int main()
 
         if (count % frames == 0)
         {
-            std::printf("frame %f\n", 60.f * clo.getElapsedTime().asSeconds());
+            std::printf("frame %f ", 60.f * clo.getElapsedTime().asSeconds());
+            std::printf("lights:%u hulls:%u\n", shw.m_lights.size(), shw.m_polys.size());
         }
-
 
         app.display();
     }
-    // static_assert(false,"read!");
-    //make shadows based on the idea i had wheen seeing pic
-    //we can make polygons using 'infinite' lines projected onto shapes
-    //so like a 2x2 box occludes
-    //and then we project from one side a light, determine visible from light
-    //surfaces and then using clipper of light projected thru surface points
-    //+ surface itself in middle clipped with entire world, and we transmute
-    //that into vertices, triangles or smt, with right lerping of
-    //colors and shit and draw! and boom!
-
-    //use something outside of range as a point of reference for scanline 
-    //rotator?
 }
 

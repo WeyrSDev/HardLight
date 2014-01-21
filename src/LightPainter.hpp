@@ -20,16 +20,19 @@ class LightPainter
 public:
     void setSize(unsigned x, unsigned y);
     void render(ShadowWorld& w);
-    void renderViaClipper(ShadowWorld& w);
 
-
-    //private:
-    sf::RenderTexture m_lighttex;
+    const sf::Texture& getCanvas()const;
+    
+private:
     sf::RenderTexture m_sumtex;
     
-    std::vector<sf::Vector2f> light;
-
+    sf::Shader m_frag;
 };
+
+inline const sf::Texture& LightPainter::getCanvas() const
+{
+    return m_sumtex.getTexture();
+}
 
 }
 
