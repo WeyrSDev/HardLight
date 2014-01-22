@@ -52,10 +52,4 @@ void Light::setSpread(float s)
     m_spread = s;
 }
 
-bool Light::inWall() const
-{
-    return m_inwall;
-}
-
-
 }

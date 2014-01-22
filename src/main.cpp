@@ -29,14 +29,6 @@ void makeHex(std::vector<sf::Vector2f>& poly, sf::Vector2f p)
 
 int main()
 {
-
-
-    //    static_assert(false, "try to do shadows per edge?");
-    //actually edges are in alrdy, just use edges if u rly need to?
-    //create other algo for edges, plugin? etc? ??
-    //see to completion of this algo and API first..?
-
-
     sf::RenderWindow app(sf::VideoMode(640u, 480u), "lights");
     app.setFramerateLimit(60u);
     ee::DebugGeometryPainter gp(app);
@@ -46,20 +38,18 @@ int main()
     lp.setSize(640u, 480u);
 
     ee::Light * lit = shw.addLight({0.f, 0.f}, 200.f);
-
     lit->setColor(sf::Color::Red);
 
-    const float off = 5.f;
     std::vector<sf::Vector2f> pl;
-    pl.push_back(sf::Vector2f(300.f, 300.f));
-    pl.push_back(sf::Vector2f(500.f, 300.f));
-    pl.push_back(sf::Vector2f(500.f, 300.f - off));
-    pl.push_back(sf::Vector2f(300.f, 300.f - off));
+    makeHex(pl, sf::Vector2f(300.f, 200.f));
 
-    shw.addShadowCaster(pl.data(), pl.size());
+    shw.addLines(pl.data(), pl.size());
+    shw.addLine(pl[0], pl[pl.size() - 1u]);
+
+
+    sf::Vector2f a;
 
     int count = 0;
-
     const int frames = 30;
 
     while (app.isOpen())
@@ -72,28 +62,27 @@ int main()
         {
             if (eve.type == sf::Event::Closed) app.close();
 
-            if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Right)
+            if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Left)
             {
-                std::vector<sf::Vector2f> poly;
-                makeHex(poly, sf::Vector2f(sf::Mouse::getPosition(app)));
-                shw.addShadowCaster(poly.data(), poly.size());
+                a = sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y);
+            }
+
+            if (eve.type == sf::Event::MouseButtonReleased && eve.mouseButton.button == sf::Mouse::Left)
+            {
+                shw.addLine(a, sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y));
             }
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::A)
             {
-                auto l = shw.addLight(sf::Vector2f(sf::Mouse::getPosition(app)), 100.f);
-                l->setColor(sf::Color::Green);
+                //                auto l = shw.addLight(sf::Vector2f(sf::Mouse::getPosition(app)), 100.f);
+                //                l->setColor(sf::Color::Green);
             }
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::Z)
             {
-                shw.m_polys.clear();
+                shw.m_lines.clear();
             }
 
-            if (eve.type == sf::Event::MouseWheelMoved)
-            {
-                lit->setRadius(lit->getRadius() + 10.f);
-            }
         }//while pollEvent
 
         if (true || sf::Mouse::isButtonPressed(sf::Mouse::Left))
@@ -111,19 +100,11 @@ int main()
         app.draw(sf::Sprite(lp.getCanvas()));
 
         const sf::Vector2f mousepos(sf::Mouse::getPosition(app));
-        
-        for (const std::unique_ptr<ee::ShadowCaster>& sc : shw.m_polys)
-        {
-            const std::vector<sf::Vector2f>& v = sc->m_vertices;
 
-            if (v.size() == 2u)
-            {
-                gp.segment(v[0], v[1], sf::Color(255u, 0u, 0u, 127u));
-            }
-            else
-            {
-                gp.polygon(v.data(), v.size(), sf::Color(255u, 0u, 0u, 127u));
-            }
+        if (count % frames == 0)
+        {
+            std::printf("frame %f ", 60.f * clo.getElapsedTime().asSeconds());
+            std::printf("lights:%u lines:%u\n", shw.m_lights.size(), shw.m_lines.size());
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
@@ -134,13 +115,12 @@ int main()
             }
         }
 
-        if (count % frames == 0)
+        for (const ee::Line& line : shw.m_lines)
         {
-            std::printf("frame %f ", 60.f * clo.getElapsedTime().asSeconds());
-            std::printf("lights:%u hulls:%u\n", shw.m_lights.size(), shw.m_polys.size());
+            gp.segment(line.a, line.b, sf::Color::Magenta);
         }
 
         app.display();
-    }
+    }//while app is open
 }
 

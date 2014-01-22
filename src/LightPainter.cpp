@@ -101,27 +101,63 @@ float radius, const sf::Vector2f * p, unsigned len, sf::Color c)
 void LightPainter::render(ShadowWorld& w)
 {
     m_sumtex.clear();
-    DebugGeometryPainter paint(m_sumtex);
-    paint.getStates().blendMode = sf::BlendAdd;
 
     clip::Clipper clip;
     for (const std::unique_ptr<Light>& l : w.m_lights)
     {
-        if (l->inWall()) continue; //dont draw lights in wall
-
         clip.Clear();
+
+        clip::Polygons out(1u);
+        out[0] = circl(l->getPosition(), l->getRadius());
+
+        int count = -1;
+        sf::Color color[3] = {sf::Color::Red, sf::Color::Green, sf::Color::Blue};
+        for (int i = 0; i < 3; ++i) color[i].a = 127u;
+
+        const bool rgb[3] = {sf::Keyboard::isKeyPressed(sf::Keyboard::R), sf::Keyboard::isKeyPressed(sf::Keyboard::G), sf::Keyboard::isKeyPressed(sf::Keyboard::B)};
+
+        static int change = 0;
+
+        const auto type1 = clip::pftEvenOdd;
+
+        const auto type2 = clip::pftEvenOdd;
+
+        const bool qdown = rgb[0] || rgb[1] || rgb[2];
 
         for (const auto& v : l->m_shadows)
         {
-            clip.AddPolygon(translate(v), clip::ptClip);
+            ++count;
+
+            clip.Clear();
+
+            auto pl = translate(v);
+            clip::CleanPolygon(pl, 0.0); //to avoid segfaults from same points
+
+            if (pl.size() != 0u)
+            {
+                clip.AddPolygon(out[0], clip::ptSubject);
+                clip.AddPolygon(pl, clip::ptClip);
+                clip.Execute(clip::ctDifference, out, type1, type2);
+            }
+
+            std::printf("%d\n", (int) clip::Orientation(translate(v)));
+
+
+            if (count < 3 && rgb[count] && out.size() > 0u && qdown)
+            {
+                const auto poly = translate(out[0]);
+
+                DebugGeometryPainter paint(m_sumtex);
+                paint.polygon(poly.data(), poly.size(), color[count]);
+
+            }
+
         }//for poly
 
-        clip.AddPolygon(circl(l->getPosition(), l->getRadius()), clip::ptSubject);
 
-        clip::Polygons out;
-        clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
 
-        if (out.size() > 0u)
+
+        if (!qdown && out.size() > 0u)
         {
             const auto poly = translate(out[0]);
             //paint.polygonCenter(l->getPosition(), poly.data(), poly.size());

@@ -18,50 +18,37 @@
 
 namespace ee {
 
+class Line
+{
+
+public:
+    sf::Vector2f a, b;
+};
+
 class ShadowWorld
 {
 
 public:
-    void addShadowCaster(sf::Vector2f * p, unsigned len);
 
     Light * addLight(sf::Vector2f p, float r);
     void removeLight(Light * ptr); //add ref overload too?
 
+    void addLine(sf::Vector2f a, sf::Vector2f b);
+    void addLines(const sf::Vector2f * v, unsigned len);
+    void addLinesStrip(const sf::Vector2f * v, unsigned len);
+
     void update();
 
-
 private:
-    typedef std::vector<sf::Vector2f> PolyData;
-
-    void beginLight(Light * light);
-
-    void collectPolys();
-    void collectAngles();
-    bool inWall();
-    void buildShadows();
-    void endLight(Light * light);
 
 
-    bool m_inwall;
-
-    class CPoly
-    {
-
-    public:
-        const PolyData * vert;
-        unsigned i1, i2;
-    };
-
-    std::vector<CPoly> m_collected;
-    
-    Light * m_clight;
-
-    
-    b2DynamicTree m_tree;
-    
 public://delme
     //private:
-    std::vector<std::unique_ptr<ShadowCaster>> m_polys;
+
+
+
+    std::vector<Line> m_lines;
+
 
     std::vector<std::unique_ptr<Light> > m_lights;
 
