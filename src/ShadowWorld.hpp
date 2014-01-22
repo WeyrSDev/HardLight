@@ -15,7 +15,7 @@
 #include "PI.hpp"
 #include "ShadowLine.hpp"
 #include "DebugGeometryPainter.hpp"
-#include <Box2D/Collision/b2DynamicTree.h>
+#include "b2DynamicTree.h"
 
 namespace ee {
 
@@ -30,27 +30,37 @@ public:
     void addLine(sf::Vector2f a, sf::Vector2f b);
     void addLines(const sf::Vector2f * v, unsigned len);
     void addLinesStrip(const sf::Vector2f * v, unsigned len);
+    //remove line
+    void removeAllLines();
 
     void update();
 
-
     unsigned getLightCount()const;
     Light * getLight(unsigned i)const;
+    
+    unsigned getLinesCounts()const;
+    
 
     //    unsigned getLinesCount()const;
     //    Line * getLine(unsinge)
 
+    void rebuildLinesTree();
+    
+    bool QueryCallback(int id);
+    
+    Light * m_currentlight;
+    
     //private:
 
 
     b2DynamicTree m_tree;
 
-    std::vector<std::unique_ptr<ShadowLine> > m_lines;
-
+    //lines are now stores directly in the tree
+    //std::vector<std::unique_ptr<ShadowLine> > m_lines;
 
     std::vector<std::unique_ptr<Light> > m_lights;
-    
-    
+
+
 
 };
 

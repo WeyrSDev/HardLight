@@ -1,6 +1,7 @@
 #include "ShadowWorld.hpp"
 #include <cmath>
 #include <SFML/Window/Keyboard.hpp>
+#include <SFML/System/Clock.hpp>
 
 namespace ee {
 
@@ -44,17 +45,16 @@ void ShadowWorld::removeLight(Light * ptr)
 
 void ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
 {
-    m_lines.emplace_back(new ShadowLine);
-    ShadowLine * line = m_lines.back().get();
-    line->a = a;
-    line->b = b;
-
     b2AABB ab;
     ab.lowerBound.x = std::min(a.x, b.x);
     ab.lowerBound.y = std::min(a.y, b.y);
 
     ab.upperBound.x = std::max(a.x, b.x);
     ab.upperBound.y = std::max(a.y, b.y);
+
+    ee::ShadowLine line;
+    line.a = a;
+    line.b = b;
 
     m_tree.CreateProxy(ab, line);
 }
@@ -77,25 +77,12 @@ void ShadowWorld::addLinesStrip(const sf::Vector2f* v, unsigned len)
     }
 }
 
-class Query
-{
-
-public:
-
-    bool QueryCallback(int id)
-    {
-        ids.push_back(id);
-        return true;
-    }
-
-    std::vector<int> ids;
-};
-
 void ShadowWorld::update()
 {
     for (const std::unique_ptr<Light>& light : m_lights)
     {
         light->m_shadows.clear();
+        m_currentlight = light.get();
 
         const sf::Vector2f p = light->getPosition();
         const float rmul = 100.f * light->getRadius();
@@ -105,24 +92,8 @@ void ShadowWorld::update()
         ab.lowerBound.y = p.y - light->getRadius();
         ab.upperBound.x = p.x + light->getRadius();
         ab.upperBound.y = p.y + light->getRadius();
-        Query qr;
-        m_tree.Query(&qr, ab);
 
-        for (const int id : qr.ids)
-        {
-            const ShadowLine& line = *static_cast<ShadowLine*> (m_tree.GetUserData(id));
-
-            const sf::Vector2f ad(setLength(line.a - p, rmul));
-            const sf::Vector2f bd(setLength(line.b - p, rmul));
-
-            std::vector<sf::Vector2f> sh;
-            sh.push_back(line.a);
-            sh.push_back(line.b);
-            sh.push_back(p + bd);
-            sh.push_back(p + ad);
-
-            light->m_shadows.push_back(sh);
-        }
+        m_tree.Query(this, ab); //query the line tree and build shadows
     }//for light
 }
 
@@ -135,5 +106,41 @@ Light * ShadowWorld::getLight(unsigned i) const
 {
     return i < m_lights.size()?m_lights[i].get():nullptr;
 }
+
+void ShadowWorld::rebuildLinesTree()
+{
+    m_tree.RebuildBottomUp();
+}
+
+bool ShadowWorld::QueryCallback(int id)
+{
+    const ShadowLine line = m_tree.GetShadowLine(id);
+
+    const sf::Vector2f p = m_currentlight->getPosition();
+    const float rmul = 100.f * m_currentlight->getRadius();
+    const sf::Vector2f ad(setLength(line.a - p, rmul));
+    const sf::Vector2f bd(setLength(line.b - p, rmul));
+
+    std::vector<sf::Vector2f> sh;
+    sh.push_back(line.a);
+    sh.push_back(line.b);
+    sh.push_back(p + bd);
+    sh.push_back(p + ad);
+
+    m_currentlight->m_shadows.push_back(sh);
+
+    return true;
+}
+
+unsigned ShadowWorld::getLinesCounts() const
+{
+    m_tree.GetShadowLinesCount();
+}
+
+void ShadowWorld::removeAllLines()
+{
+    m_tree.ClearAll();
+}
+
 
 }

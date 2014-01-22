@@ -29,8 +29,6 @@ void makeHex(std::vector<sf::Vector2f>& poly, sf::Vector2f p)
 
 int main()
 {
-    
-    
     sf::Texture tex;
     tex.loadFromFile("payday.jpg");
     sf::Sprite payday(tex);
@@ -46,7 +44,11 @@ int main()
     lp.enableFragFromFile("light.frag");
 
     ee::Light * lit = shw.addLight({0.f, 0.f}, 100.f);
-    lit->setColor(sf::Color::Red);
+    //lit->setColor(sf::Color::Red);
+    lit->setSpread(ee::halfpi);
+    //lit->setAngle(ee::halfpi);
+
+    float angle = 0.f;
 
     std::vector<sf::Vector2f> pl;
     makeHex(pl, sf::Vector2f(300.f, 300.f));
@@ -56,12 +58,17 @@ int main()
 
 
     sf::Vector2f a;
+    bool adding = false;
 
     int count = 0;
-    const int frames = 300000000;
+    const int frames = 30;
 
     while (app.isOpen())
     {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)) angle += ee::pi2 / 120.f;
+
+        lit->setAngle(angle);
+
         ++count;
         sf::Clock clo;
 
@@ -73,11 +80,13 @@ int main()
             if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Left)
             {
                 a = sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y);
+                adding = true;
             }
 
             if (eve.type == sf::Event::MouseButtonReleased && eve.mouseButton.button == sf::Mouse::Left)
             {
                 shw.addLine(a, sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y));
+                adding = false;
             }
 
             if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Right)
@@ -87,7 +96,7 @@ int main()
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::Z)
             {
-                shw.m_lines.clear();
+                shw.removeAllLines();
             }
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::X)
@@ -100,6 +109,10 @@ int main()
                 lp.reenableFrag(!lp.isFragEnabled());
             }
 
+            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::R)
+            {
+                shw.rebuildLinesTree();
+            }
         }//while pollEvent
 
         if (true || sf::Mouse::isButtonPressed(sf::Mouse::Left))
@@ -123,14 +136,18 @@ int main()
         if (count % frames == 0)
         {
             std::printf("frame %f ", 60.f * clo.getElapsedTime().asSeconds());
-            std::printf("lights:%u lines:%u\n", shw.m_lights.size(), shw.m_lines.size());
+            std::printf("lights:%u lines:%u\n", shw.getLightCount(), shw.getLinesCounts());
         }
+
+        if (adding) gp.segment(a, sf::Vector2f(sf::Mouse::getPosition(app)));
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         {
-            for (const std::unique_ptr<ee::ShadowLine>& line : shw.m_lines)
+            for (int i = 0; i < shw.m_tree.GetShadowLinesCount(); ++i)
             {
-                gp.segment(line->a, line->b, sf::Color::Magenta);
+
+                const ee::ShadowLine line = shw.m_tree.GetNthShadowLine(i);
+                gp.segment(line.a, line.b, sf::Color::Magenta);
             }
         }
 

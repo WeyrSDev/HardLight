@@ -55,13 +55,13 @@ std::vector<sf::Vector2f> translate(const clip::Polygon& in)
     return out;
 }
 
-clip::Polygon circl(sf::Vector2f v, float r)
+clip::Polygon circl(sf::Vector2f v, float r, float angle, float spread)
 {
     std::vector<sf::Vector2f> mid;
 
     for (int i = 0; i < 30; ++i)
     {
-        const float arg = pi2 * i / 30.f;
+        const float arg = angle - spread / 2.f + spread * i / 29.f;
         mid.push_back(v + r * sf::Vector2f(std::cos(arg), -std::sin(arg)));
     }
 
@@ -106,7 +106,7 @@ void LightPainter::render(ShadowWorld& w)
 
         clip.Clear();
         clip::Polygons out(1u);
-        out[0] = circl(l->getPosition(), l->getRadius());
+        out[0] = circl(l->getPosition(), l->getRadius(), l->getAngle(), l->getSpread());
         clip.AddPolygon(out[0], clip::ptSubject);
 
         for (const auto& v : l->m_shadows)
