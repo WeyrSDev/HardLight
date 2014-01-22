@@ -29,6 +29,14 @@ void makeHex(std::vector<sf::Vector2f>& poly, sf::Vector2f p)
 
 int main()
 {
+
+
+    //    static_assert(false, "try to do shadows per edge?");
+    //actually edges are in alrdy, just use edges if u rly need to?
+    //create other algo for edges, plugin? etc? ??
+    //see to completion of this algo and API first..?
+
+
     sf::RenderWindow app(sf::VideoMode(640u, 480u), "lights");
     app.setFramerateLimit(60u);
     ee::DebugGeometryPainter gp(app);
@@ -39,7 +47,7 @@ int main()
 
     ee::Light * lit = shw.addLight({0.f, 0.f}, 200.f);
 
-    lit->setColor(sf::Color::Yellow);
+    lit->setColor(sf::Color::Red);
 
     const float off = 2.f;
     std::vector<sf::Vector2f> pl;
@@ -64,7 +72,7 @@ int main()
         {
             if (eve.type == sf::Event::Closed) app.close();
 
-            if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Middle)
+            if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Right)
             {
                 std::vector<sf::Vector2f> poly;
                 makeHex(poly, sf::Vector2f(sf::Mouse::getPosition(app)));

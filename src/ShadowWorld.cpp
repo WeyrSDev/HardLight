@@ -44,6 +44,7 @@ Light * ShadowWorld::addLight(sf::Vector2f p, float r)
     l->m_radius = r;
     l->m_spread = pi2;
     l->m_angle = 0.f;
+    l->m_inwall = false;
 
     return l;
 }
@@ -71,8 +72,21 @@ void ShadowWorld::update()
     {
         light->m_shadows.clear();
 
+
         for (const std::vector<sf::Vector2f>& poly : m_polys)
         {
+            //check is light is inside
+        }
+
+
+
+        const float radius = light->getRadius();
+
+        for (const std::vector<sf::Vector2f>& poly : m_polys)
+        {
+
+            bool inrad = false;
+
             const sf::Vector2f mid = getMid(poly);
 
             const float ref = getAngle2(mid - light->m_pos, pi);
@@ -83,6 +97,10 @@ void ShadowWorld::update()
 
             for (int i = 0; i < poly.size(); ++i)
             {
+                const sf::Vector2f d(poly[i] - light->getPosition());
+
+                if (radius * radius >= (d.x * d.x + d.y * d.y)) inrad = true;
+
                 const float b = getAngle2(poly[i] - light -> m_pos, ref);
                 const auto v = poly[i] - light->m_pos;
 
@@ -99,6 +117,8 @@ void ShadowWorld::update()
                 }
             }
 
+            if (!inrad) continue;
+
             //making shadow for that occluder:
             light->m_shadows.push_back(std::vector<sf::Vector2f>());
 
@@ -107,7 +127,7 @@ void ShadowWorld::update()
             shadow.push_back(poly[i1]);
 
             unsigned i = i1;
-            
+
             while (i != i2)
             {
                 i = (i + 1u) % poly.size();

@@ -12,14 +12,12 @@ namespace ee {
 
 namespace clip = ClipperLib;
 
-
-sf::Shader * GLOBAL_shader = nullptr;
-
 void LightPainter::setSize(unsigned x, unsigned y)
 {
     m_sumtex.create(x, y);
+
+    //almost surely it has to be done per pixel..
     m_frag.loadFromFile("light.frag", sf::Shader::Fragment);
-    GLOBAL_shader = &m_frag;
 }
 
 namespace {
@@ -73,38 +71,8 @@ clip::Polygon circl(sf::Vector2f v, float r)
     return translate(mid);
 }
 
-sf::Color lerpColor(sf::Color c1, sf::Color c2, float lerpval)
-{
-    if (lerpval >= 1.f) return c2;
-
-    //LINEAR INTERPOLATION
-
-    const float r = lerpval * (c2.r - c1.r);
-    const float g = lerpval * (c2.g - c1.g);
-    const float b = lerpval * (c2.b - c1.b);
-    const float a = lerpval * (c2.a - c1.a);
-
-    c1.r += r;
-    c1.g += g;
-    c1.b += b;
-    c1.a += a;
-
-    return c1;
-}
-
-float getLen2(sf::Vector2f v1, sf::Vector2f v2)
-{
-    const sf::Vector2f v(v2 - v1);
-    return v.x * v.x + v.y * v.y;
-}
-
-float getLen(sf::Vector2f v1, sf::Vector2f v2)
-{
-    return std::sqrt(getLen2(v1, v2));
-}
-
-void drawBlendedLight(sf::RenderTarget& t, sf::Vector2f m, float radius,
-const sf::Vector2f * p, unsigned len, sf::Color c, sf::Color o)
+void drawBlendedLight(sf::RenderTarget& t, sf::Shader& s, sf::Vector2f m,
+float radius, const sf::Vector2f * p, unsigned len, sf::Color c)
 {
     sf::VertexArray arr(sf::TrianglesFan, len + 2u);
     arr[0].position = m;
@@ -113,7 +81,6 @@ const sf::Vector2f * p, unsigned len, sf::Color c, sf::Color o)
     for (unsigned i = 0; i < len; ++i)
     {
         arr[i + 1u].position = p[i];
-        //arr[i + 1u].color = lerpColor(c, o, getLen(m, p[i]) / radius);
         arr[i + 1u].color = c;
         arr[i + 1u].texCoords = p[i] - m;
     }
@@ -122,9 +89,10 @@ const sf::Vector2f * p, unsigned len, sf::Color c, sf::Color o)
 
     sf::RenderStates states;
     states.blendMode = sf::BlendAdd;
+    states.shader = &s;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) states.shader = GLOBAL_shader;
-    GLOBAL_shader->setParameter("radius", radius);
+    s.setParameter("radius", radius);
+
     t.draw(arr, states);
 }
 
@@ -157,7 +125,7 @@ void LightPainter::render(ShadowWorld& w)
             //paint.polygonCenter(l->getPosition(), poly.data(), poly.size());
             sf::Color out = l->getColor();
             out.a = 0u;
-            drawBlendedLight(m_sumtex, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor(), out);
+            drawBlendedLight(m_sumtex, m_frag, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor());
 
         }
     }//for light

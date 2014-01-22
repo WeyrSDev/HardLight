@@ -9,7 +9,7 @@ sf::Vector2f Light::getPosition() const
 
 void Light::setPosition(sf::Vector2f p)
 {
-    m_pos=p;
+    m_pos = p;
 }
 
 float Light::getRadius() const
@@ -19,7 +19,7 @@ float Light::getRadius() const
 
 void Light::setRadius(float r)
 {
-    m_radius=r;
+    m_radius = r;
 }
 
 sf::Color Light::getColor() const
@@ -29,7 +29,7 @@ sf::Color Light::getColor() const
 
 void Light::setColor(sf::Color c)
 {
-    m_color=c;
+    m_color = c;
 }
 
 float Light::getAngle() const
@@ -39,7 +39,7 @@ float Light::getAngle() const
 
 void Light::setAngle(float a)
 {
-    m_angle=a;
+    m_angle = a;
 }
 
 float Light::getSpread() const
@@ -49,7 +49,13 @@ float Light::getSpread() const
 
 void Light::setSpread(float s)
 {
-    m_spread=s;
+    m_spread = s;
 }
+
+bool Light::inWall() const
+{
+    return m_inwall;
+}
+
 
 }

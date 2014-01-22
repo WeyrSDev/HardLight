@@ -34,6 +34,7 @@ public:
     float getSpread()const;
     void setSpread(float s);
 
+    bool inWall()const;
 private:
 
     sf::Vector2f m_pos;
@@ -41,6 +42,7 @@ private:
     sf::Color m_color;
     float m_angle;
     float m_spread;
+    bool m_inwall;
 
 public://delme
     
