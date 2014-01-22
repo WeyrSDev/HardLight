@@ -23,7 +23,7 @@ public:
 
     const sf::Texture& getCanvas()const;
     bool isFragEnabled()const;
-    void setFragEnabled(bool enabled);
+    void reenableFrag(bool enabled);
 
     bool enableFragFromFile(const std::string& fn);
 
@@ -39,7 +39,7 @@ inline const sf::Texture& LightPainter::getCanvas() const
     return m_sumtex.getTexture();
 }
 
-inline void LightPainter::setFragEnabled(bool enabled)
+inline void LightPainter::reenableFrag(bool enabled)
 {
     m_fragenabled = enabled;
 }
