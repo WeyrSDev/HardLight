@@ -29,6 +29,11 @@ void makeHex(std::vector<sf::Vector2f>& poly, sf::Vector2f p)
 
 int main()
 {
+    sf::Texture tex;
+    tex.loadFromFile("payday.jpg");
+    sf::Sprite payday(tex);
+    payday.setScale(640.f / tex.getSize().x, 480.f / tex.getSize().y);
+
     sf::RenderWindow app(sf::VideoMode(640u, 480u), "lights");
     app.setFramerateLimit(60u);
     ee::DebugGeometryPainter gp(app);
@@ -36,12 +41,13 @@ int main()
     ee::ShadowWorld shw;
     ee::LightPainter lp;
     lp.setSize(640u, 480u);
+    lp.enableFragFromFile("light.frag");
 
-    ee::Light * lit = shw.addLight({0.f, 0.f}, 200.f);
+    ee::Light * lit = shw.addLight({0.f, 0.f}, 300.f);
     lit->setColor(sf::Color::Red);
 
     std::vector<sf::Vector2f> pl;
-    makeHex(pl, sf::Vector2f(300.f, 200.f));
+    makeHex(pl, sf::Vector2f(300.f, 300.f));
 
     shw.addLines(pl.data(), pl.size());
     shw.addLine(pl[0], pl[pl.size() - 1u]);
@@ -72,10 +78,9 @@ int main()
                 shw.addLine(a, sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y));
             }
 
-            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::A)
+            if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Right)
             {
-                //                auto l = shw.addLight(sf::Vector2f(sf::Mouse::getPosition(app)), 100.f);
-                //                l->setColor(sf::Color::Green);
+                shw.addLight(sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y), 250.f);
             }
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::Z)
@@ -97,7 +102,8 @@ int main()
         if (count % frames == 0) std::printf("shadow %f ", 60.f * clo2.getElapsedTime().asSeconds());
 
         app.clear();
-        app.draw(sf::Sprite(lp.getCanvas()));
+        app.draw(payday);
+        app.draw(sf::Sprite(lp.getCanvas()), sf::BlendMultiply);
 
         const sf::Vector2f mousepos(sf::Mouse::getPosition(app));
 
@@ -109,15 +115,10 @@ int main()
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         {
-            for (const std::vector<sf::Vector2f>& v : lit->m_shadows)
+            for (const ee::Line& line : shw.m_lines)
             {
-                gp.polygon(v.data(), v.size(), sf::Color::Blue);
+                gp.segment(line.a, line.b, sf::Color::Magenta);
             }
-        }
-
-        for (const ee::Line& line : shw.m_lines)
-        {
-            gp.segment(line.a, line.b, sf::Color::Magenta);
         }
 
         app.display();

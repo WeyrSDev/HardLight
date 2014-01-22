@@ -15,9 +15,6 @@ namespace clip = ClipperLib;
 void LightPainter::setSize(unsigned x, unsigned y)
 {
     m_sumtex.create(x, y);
-
-    //almost surely it has to be done per pixel..
-    m_frag.loadFromFile("light.frag", sf::Shader::Fragment);
 }
 
 namespace {
@@ -71,7 +68,7 @@ clip::Polygon circl(sf::Vector2f v, float r)
     return translate(mid);
 }
 
-void drawBlendedLight(sf::RenderTarget& t, sf::Shader& s, sf::Vector2f m,
+void drawBlendedLight(sf::RenderTarget& t, sf::Shader * s, sf::Vector2f m,
 float radius, const sf::Vector2f * p, unsigned len, sf::Color c)
 {
     sf::VertexArray arr(sf::TrianglesFan, len + 2u);
@@ -89,9 +86,9 @@ float radius, const sf::Vector2f * p, unsigned len, sf::Color c)
 
     sf::RenderStates states;
     states.blendMode = sf::BlendAdd;
-    states.shader = &s;
+    states.shader = s;
 
-    s.setParameter("radius", radius);
+    if (s) s->setParameter("radius", radius);
 
     t.draw(arr, states);
 }
@@ -101,74 +98,39 @@ float radius, const sf::Vector2f * p, unsigned len, sf::Color c)
 void LightPainter::render(ShadowWorld& w)
 {
     m_sumtex.clear();
-
     clip::Clipper clip;
+
     for (const std::unique_ptr<Light>& l : w.m_lights)
     {
         clip.Clear();
-
-        clip::Polygons out(1u);
-        out[0] = circl(l->getPosition(), l->getRadius());
-
-        int count = -1;
-        sf::Color color[3] = {sf::Color::Red, sf::Color::Green, sf::Color::Blue};
-        for (int i = 0; i < 3; ++i) color[i].a = 127u;
-
-        const bool rgb[3] = {sf::Keyboard::isKeyPressed(sf::Keyboard::R), sf::Keyboard::isKeyPressed(sf::Keyboard::G), sf::Keyboard::isKeyPressed(sf::Keyboard::B)};
-
-        static int change = 0;
-
-        const auto type1 = clip::pftEvenOdd;
-
-        const auto type2 = clip::pftEvenOdd;
-
-        const bool qdown = rgb[0] || rgb[1] || rgb[2];
+        clip.AddPolygon(circl(l->getPosition(), l->getRadius()), clip::ptSubject);
 
         for (const auto& v : l->m_shadows)
         {
-            ++count;
-
-            clip.Clear();
-
             auto pl = translate(v);
             clip::CleanPolygon(pl, 0.0); //to avoid segfaults from same points
-
-            if (pl.size() != 0u)
-            {
-                clip.AddPolygon(out[0], clip::ptSubject);
-                clip.AddPolygon(pl, clip::ptClip);
-                clip.Execute(clip::ctDifference, out, type1, type2);
-            }
-
-            std::printf("%d\n", (int) clip::Orientation(translate(v)));
-
-
-            if (count < 3 && rgb[count] && out.size() > 0u && qdown)
-            {
-                const auto poly = translate(out[0]);
-
-                DebugGeometryPainter paint(m_sumtex);
-                paint.polygon(poly.data(), poly.size(), color[count]);
-
-            }
-
+            if (clip::Orientation(pl)) clip::ReversePolygon(pl);
+            clip.AddPolygon(pl, clip::ptClip);
         }//for poly
 
+        clip::Polygons out;
+        clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
 
-
-
-        if (!qdown && out.size() > 0u)
+        if (out.size() > 0u)
         {
             const auto poly = translate(out[0]);
-            //paint.polygonCenter(l->getPosition(), poly.data(), poly.size());
-            sf::Color out = l->getColor();
-            out.a = 0u;
-            drawBlendedLight(m_sumtex, m_frag, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor());
-
+            sf::Shader * frag = m_fragenabled?&m_frag:nullptr;
+            drawBlendedLight(m_sumtex, frag, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor());
         }
     }//for light
 
     m_sumtex.display();
+}
+
+bool LightPainter::enableFragFromFile(const std::string& fn)
+{
+    m_fragenabled = m_frag.loadFromFile(fn, sf::Shader::Fragment);
+    return isFragEnabled();
 }
 
 }

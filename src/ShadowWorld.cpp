@@ -25,6 +25,7 @@ Light * ShadowWorld::addLight(sf::Vector2f p, float r)
     l->m_radius = r;
     l->m_spread = pi2;
     l->m_angle = 0.f;
+    l->m_color = sf::Color::White;
 
     return l;
 }

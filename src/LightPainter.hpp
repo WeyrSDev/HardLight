@@ -22,16 +22,31 @@ public:
     void render(ShadowWorld& w);
 
     const sf::Texture& getCanvas()const;
-    
+    bool isFragEnabled()const;
+    void setFragEnabled(bool enabled);
+
+    bool enableFragFromFile(const std::string& fn);
+
 private:
     sf::RenderTexture m_sumtex;
-    
+
     sf::Shader m_frag;
+    bool m_fragenabled;
 };
 
 inline const sf::Texture& LightPainter::getCanvas() const
 {
     return m_sumtex.getTexture();
+}
+
+inline void LightPainter::setFragEnabled(bool enabled)
+{
+    m_fragenabled = enabled;
+}
+
+inline bool LightPainter::isFragEnabled() const
+{
+    return m_fragenabled;
 }
 
 }
