@@ -13,18 +13,11 @@
 #include <memory>
 #include <SFML/System/Vector2.hpp>
 #include "PI.hpp"
-#include "ShadowCaster.hpp"
+#include "ShadowLine.hpp"
 #include "DebugGeometryPainter.hpp"
 #include <Box2D/Collision/b2DynamicTree.h>
 
 namespace ee {
-
-class Line
-{
-
-public:
-    sf::Vector2f a, b;
-};
 
 class ShadowWorld
 {
@@ -40,18 +33,24 @@ public:
 
     void update();
 
-private:
 
+    unsigned getLightCount()const;
+    Light * getLight(unsigned i)const;
 
-public://delme
+    //    unsigned getLinesCount()const;
+    //    Line * getLine(unsinge)
+
     //private:
+
 
     b2DynamicTree m_tree;
 
-    std::vector<std::unique_ptr<Line> > m_lines;
+    std::vector<std::unique_ptr<ShadowLine> > m_lines;
 
 
     std::vector<std::unique_ptr<Light> > m_lights;
+    
+    
 
 };
 

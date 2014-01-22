@@ -44,8 +44,8 @@ void ShadowWorld::removeLight(Light * ptr)
 
 void ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
 {
-    m_lines.emplace_back(new Line);
-    Line * line = m_lines.back().get();
+    m_lines.emplace_back(new ShadowLine);
+    ShadowLine * line = m_lines.back().get();
     line->a = a;
     line->b = b;
 
@@ -110,7 +110,7 @@ void ShadowWorld::update()
 
         for (const int id : qr.ids)
         {
-            const Line& line = *static_cast<Line*> (m_tree.GetUserData(id));
+            const ShadowLine& line = *static_cast<ShadowLine*> (m_tree.GetUserData(id));
 
             const sf::Vector2f ad(setLength(line.a - p, rmul));
             const sf::Vector2f bd(setLength(line.b - p, rmul));
@@ -124,6 +124,16 @@ void ShadowWorld::update()
             light->m_shadows.push_back(sh);
         }
     }//for light
+}
+
+unsigned ShadowWorld::getLightCount() const
+{
+    return m_lights.size();
+}
+
+Light * ShadowWorld::getLight(unsigned i) const
+{
+    return i < m_lights.size()?m_lights[i].get():nullptr;
 }
 
 }

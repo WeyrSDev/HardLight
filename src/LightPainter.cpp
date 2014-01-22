@@ -100,8 +100,10 @@ void LightPainter::render(ShadowWorld& w)
     m_sumtex.clear();
     clip::Clipper clip;
 
-    for (const std::unique_ptr<Light>& l : w.m_lights)
+    for (unsigned i = 0u; i < w.getLightCount(); ++i)
     {
+        Light * l = w.getLight(i);
+
         clip.Clear();
         clip::Polygons out(1u);
         out[0] = circl(l->getPosition(), l->getRadius());

@@ -29,6 +29,8 @@ void makeHex(std::vector<sf::Vector2f>& poly, sf::Vector2f p)
 
 int main()
 {
+    
+    
     sf::Texture tex;
     tex.loadFromFile("payday.jpg");
     sf::Sprite payday(tex);
@@ -126,7 +128,7 @@ int main()
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         {
-            for (const std::unique_ptr<ee::Line>& line : shw.m_lines)
+            for (const std::unique_ptr<ee::ShadowLine>& line : shw.m_lines)
             {
                 gp.segment(line->a, line->b, sf::Color::Magenta);
             }
