@@ -44,10 +44,19 @@ void ShadowWorld::removeLight(Light * ptr)
 
 void ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
 {
-    Line line;
-    line.a = a;
-    line.b = b;
-    m_lines.push_back(line);
+    m_lines.emplace_back(new Line);
+    Line * line = m_lines.back().get();
+    line->a = a;
+    line->b = b;
+
+    b2AABB ab;
+    ab.lowerBound.x = std::min(a.x, b.x);
+    ab.lowerBound.y = std::min(a.y, b.y);
+
+    ab.upperBound.x = std::max(a.x, b.x);
+    ab.upperBound.y = std::max(a.y, b.y);
+
+    m_tree.CreateProxy(ab, line);
 }
 
 void ShadowWorld::addLines(const sf::Vector2f* v, unsigned len)
@@ -68,6 +77,20 @@ void ShadowWorld::addLinesStrip(const sf::Vector2f* v, unsigned len)
     }
 }
 
+class Query
+{
+
+public:
+
+    bool QueryCallback(int id)
+    {
+        ids.push_back(id);
+        return true;
+    }
+
+    std::vector<int> ids;
+};
+
 void ShadowWorld::update()
 {
     for (const std::unique_ptr<Light>& light : m_lights)
@@ -77,8 +100,18 @@ void ShadowWorld::update()
         const sf::Vector2f p = light->getPosition();
         const float rmul = 100.f * light->getRadius();
 
-        for (const Line& line : m_lines)
+        b2AABB ab;
+        ab.lowerBound.x = p.x - light->getRadius();
+        ab.lowerBound.y = p.y - light->getRadius();
+        ab.upperBound.x = p.x + light->getRadius();
+        ab.upperBound.y = p.y + light->getRadius();
+        Query qr;
+        m_tree.Query(&qr, ab);
+
+        for (const int id : qr.ids)
         {
+            const Line& line = *static_cast<Line*> (m_tree.GetUserData(id));
+
             const sf::Vector2f ad(setLength(line.a - p, rmul));
             const sf::Vector2f bd(setLength(line.b - p, rmul));
 
@@ -90,10 +123,7 @@ void ShadowWorld::update()
 
             light->m_shadows.push_back(sh);
         }
-
-
-    }
-
+    }//for light
 }
 
 }

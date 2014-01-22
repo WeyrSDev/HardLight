@@ -39,6 +39,8 @@ public:
     void circleOutline(sf::Vector2f p, float r, sf::Color c = sf::Color::White)const;
     void softCircle(sf::Vector2f p, float r, sf::Color c = sf::Color::White, sf::Color o = sf::Color::Black, float angle = 0.f, float spread = pi2)const;
 
+    void rectangle(float x1, float y1, float x2, float y2, sf::Color c = sf::Color::White)const;
+
     sf::RenderStates& getStates();
     sf::RenderStates getStates()const;
 

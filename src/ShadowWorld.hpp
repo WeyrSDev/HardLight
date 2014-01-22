@@ -14,6 +14,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "PI.hpp"
 #include "ShadowCaster.hpp"
+#include "DebugGeometryPainter.hpp"
 #include <Box2D/Collision/b2DynamicTree.h>
 
 namespace ee {
@@ -45,9 +46,9 @@ private:
 public://delme
     //private:
 
+    b2DynamicTree m_tree;
 
-
-    std::vector<Line> m_lines;
+    std::vector<std::unique_ptr<Line> > m_lines;
 
 
     std::vector<std::unique_ptr<Light> > m_lights;

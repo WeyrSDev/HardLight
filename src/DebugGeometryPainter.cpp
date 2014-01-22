@@ -140,6 +140,15 @@ void DebugGeometryPainter::softCircle(sf::Vector2f p, float r, sf::Color c, sf::
     target().draw(arr, m_states);
 }
 
+void DebugGeometryPainter::rectangle(float x1, float y1, float x2, float y2, sf::Color c) const
+{
+    sf::RectangleShape sha;
+    sha.setPosition(x1, y1);
+    sha.setSize(sf::Vector2f(x2 - x1, y2 - y1));
+    sha.setFillColor(c);
+    target().draw(sha, m_states);
+}
+
 sf::RenderStates& DebugGeometryPainter::getStates()
 {
     return m_states;

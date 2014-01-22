@@ -43,7 +43,7 @@ int main()
     lp.setSize(640u, 480u);
     lp.enableFragFromFile("light.frag");
 
-    ee::Light * lit = shw.addLight({0.f, 0.f}, 300.f);
+    ee::Light * lit = shw.addLight({0.f, 0.f}, 100.f);
     lit->setColor(sf::Color::Red);
 
     std::vector<sf::Vector2f> pl;
@@ -56,7 +56,7 @@ int main()
     sf::Vector2f a;
 
     int count = 0;
-    const int frames = 30;
+    const int frames = 300000000;
 
     while (app.isOpen())
     {
@@ -80,12 +80,22 @@ int main()
 
             if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Right)
             {
-                shw.addLight(sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y), 250.f);
+                shw.addLight(sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y), 100.f)->setColor(sf::Color::Cyan);
             }
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::Z)
             {
                 shw.m_lines.clear();
+            }
+
+            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::X)
+            {
+                shw.m_lights.resize(1u);
+            }
+
+            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::S)
+            {
+                lp.reenableFrag(!lp.isFragEnabled());
             }
 
         }//while pollEvent
@@ -95,13 +105,14 @@ int main()
             lit->setPosition(sf::Vector2f(sf::Mouse::getPosition(app)));
         }
 
+        app.clear();
+
         shw.update();
 
         sf::Clock clo2;
         lp.render(shw);
         if (count % frames == 0) std::printf("shadow %f ", 60.f * clo2.getElapsedTime().asSeconds());
 
-        app.clear();
         app.draw(payday);
         app.draw(sf::Sprite(lp.getCanvas()), sf::BlendMultiply);
 
@@ -115,9 +126,9 @@ int main()
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         {
-            for (const ee::Line& line : shw.m_lines)
+            for (const std::unique_ptr<ee::Line>& line : shw.m_lines)
             {
-                gp.segment(line.a, line.b, sf::Color::Magenta);
+                gp.segment(line->a, line->b, sf::Color::Magenta);
             }
         }
 

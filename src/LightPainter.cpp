@@ -103,7 +103,9 @@ void LightPainter::render(ShadowWorld& w)
     for (const std::unique_ptr<Light>& l : w.m_lights)
     {
         clip.Clear();
-        clip.AddPolygon(circl(l->getPosition(), l->getRadius()), clip::ptSubject);
+        clip::Polygons out(1u);
+        out[0] = circl(l->getPosition(), l->getRadius());
+        clip.AddPolygon(out[0], clip::ptSubject);
 
         for (const auto& v : l->m_shadows)
         {
@@ -113,8 +115,11 @@ void LightPainter::render(ShadowWorld& w)
             clip.AddPolygon(pl, clip::ptClip);
         }//for poly
 
-        clip::Polygons out;
-        clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
+        //do not clip if there are no shadows
+        if (l->m_shadows.size() > 0u)
+        {
+            clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
+        }
 
         if (out.size() > 0u)
         {
