@@ -59,6 +59,8 @@ clip::Polygon circl(sf::Vector2f v, float r, float angle, float spread)
 {
     std::vector<sf::Vector2f> mid;
 
+    if (spread + 1.f / 30.f * ee::pi2 < ee::pi2) mid.push_back(v); //fix for cones
+
     for (int i = 0; i < 30; ++i)
     {
         const float arg = angle - spread / 2.f + spread * i / 29.f;
@@ -107,7 +109,14 @@ void LightPainter::render(ShadowWorld& w)
         clip.Clear();
         clip::Polygons out(1u);
         out[0] = circl(l->getPosition(), l->getRadius(), l->getAngle(), l->getSpread());
+
+        if (clip::Orientation(out[0])) clip::ReversePolygon(out[0]);
+
         clip.AddPolygon(out[0], clip::ptSubject);
+
+        //DebugGeometryPainter gp(m_sumtex);
+        //auto a = translate(out[0]);
+        //gp.polygon(a.data(), a.size(), sf::Color::Blue);
 
         for (const auto& v : l->m_shadows)
         {

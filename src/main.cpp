@@ -2,6 +2,7 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <polyclipping/clipper.hpp>
+#include <QtCore/qglobal.h>
 #include "DebugGeometryPainter.hpp"
 #include "ShadowWorld.hpp"
 #include "LightPainter.hpp"
@@ -149,6 +150,12 @@ int main()
                 const ee::ShadowLine line = shw.m_tree.GetNthShadowLine(i);
                 gp.segment(line.a, line.b, sf::Color::Magenta);
             }
+
+            for (const std::vector<sf::Vector2f>& v : lit->m_shadows)
+            {
+                gp.polygon(v.data(), v.size(), sf::Color::Blue);
+            }
+
         }
 
         app.display();
