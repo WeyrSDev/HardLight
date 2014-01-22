@@ -28,8 +28,22 @@ public:
     void update();
 
 
-
-
+private:
+    typedef std::vector<sf::Vector2f> Polygon;
+    
+    void beginLight(Light * l);
+    
+    void calcMinMax(Light * l,const Polygon& p);
+    
+    bool insidePoly();
+    
+    
+    
+    void endLight(Light * l);
+    
+    std::vector<sf::Vector2f> m_minmax;
+    
+public://delme
     //private:
     std::vector<std::vector<sf::Vector2f> > m_polys;
 

@@ -71,21 +71,13 @@ void ShadowWorld::update()
     for (const std::unique_ptr<Light>& light : m_lights)
     {
         light->m_shadows.clear();
+        light->m_inwall = false;
+
 
 
         for (const std::vector<sf::Vector2f>& poly : m_polys)
         {
-            //check is light is inside
-        }
 
-
-
-        const float radius = light->getRadius();
-
-        for (const std::vector<sf::Vector2f>& poly : m_polys)
-        {
-
-            bool inrad = false;
 
             const sf::Vector2f mid = getMid(poly);
 
@@ -99,7 +91,7 @@ void ShadowWorld::update()
             {
                 const sf::Vector2f d(poly[i] - light->getPosition());
 
-                if (radius * radius >= (d.x * d.x + d.y * d.y)) inrad = true;
+                //                if (radius * radius >= (d.x * d.x + d.y * d.y)) inrad = true;
 
                 const float b = getAngle2(poly[i] - light -> m_pos, ref);
                 const auto v = poly[i] - light->m_pos;
@@ -117,7 +109,13 @@ void ShadowWorld::update()
                 }
             }
 
-            if (!inrad) continue;
+            if ((max - min) > pi) //is that right?
+            {
+                light->m_shadows.clear();
+                light->m_inwall = true;
+                break; //no more poly processing
+            }
+
 
             //making shadow for that occluder:
             light->m_shadows.push_back(std::vector<sf::Vector2f>());

@@ -107,6 +107,8 @@ void LightPainter::render(ShadowWorld& w)
     clip::Clipper clip;
     for (const std::unique_ptr<Light>& l : w.m_lights)
     {
+        if (l->inWall()) continue; //dont draw lights in wall
+
         clip.Clear();
 
         for (const auto& v : l->m_shadows)

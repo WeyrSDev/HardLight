@@ -92,7 +92,7 @@ int main()
 
             if (eve.type == sf::Event::MouseWheelMoved)
             {
-                lit->setRadius(lit->getRadius() + eve.mouseWheel.delta);
+                lit->setRadius(lit->getRadius() + 10.f);
             }
         }//while pollEvent
 
