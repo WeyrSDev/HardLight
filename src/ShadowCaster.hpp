@@ -13,6 +13,15 @@
 
 namespace ee {
 
+class ShadowCaster
+{
+    friend class ShadowWorld;
+public:
+
+//private:
+    std::vector<sf::Vector2f> m_vertices;
+    int m_quadnode;
+};
 
 }
 

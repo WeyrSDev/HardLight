@@ -63,94 +63,183 @@ void ShadowWorld::removeLight(Light * ptr)
 
 void ShadowWorld::addShadowCaster(sf::Vector2f * p, unsigned len)
 {
+    std::unique_ptr<ShadowCaster> sc(new ShadowCaster);
 
+    sc->m_vertices.assign(p, p + len);
+
+    b2AABB ab;
+
+    for (unsigned i = 0u; i < len; ++i)
+    {
+        ab.lowerBound.x = std::min(ab.lowerBound.x, p[i].x);
+        ab.upperBound.x = std::max(ab.upperBound.x, p[i].x);
+
+        ab.lowerBound.y = std::min(ab.lowerBound.y, p[i].y);
+        ab.upperBound.y = std::max(ab.upperBound.y, p[i].y);
+    }
+
+    sc->m_quadnode = m_tree.CreateProxy(ab, sc.get());
+
+    m_polys.push_back(std::move(sc));
 }
 
 void ShadowWorld::update()
 {
     for (const std::unique_ptr<Light>& light : m_lights)
     {
-        light->m_shadows.clear();
-        light->m_inwall = false;
+        beginLight(light.get());
 
+        collectPolys();
+        collectAngles();
 
-
-        for (const std::vector<sf::Vector2f>& poly : m_polys)
+        if (inWall())
         {
-
-
-            const sf::Vector2f mid = getMid(poly);
-
-            const float ref = getAngle2(mid - light->m_pos, pi);
-
-            float min = getAngle2(poly[0] - light->m_pos, ref);
-            float max = min;
-            unsigned i1 = 0u, i2 = 0u;
-
-            for (int i = 0; i < poly.size(); ++i)
-            {
-                const sf::Vector2f d(poly[i] - light->getPosition());
-
-                //                if (radius * radius >= (d.x * d.x + d.y * d.y)) inrad = true;
-
-                const float b = getAngle2(poly[i] - light -> m_pos, ref);
-                const auto v = poly[i] - light->m_pos;
-
-                if (min > b)
-                {
-                    i1 = i;
-                    min = b;
-                }
-
-                if (max < b)
-                {
-                    i2 = i;
-                    max = b;
-                }
-            }
-
-            if ((max - min) > pi) //is that right?
-            {
-                light->m_shadows.clear();
-                light->m_inwall = true;
-                break; //no more poly processing
-            }
-
-
-            //making shadow for that occluder:
-            light->m_shadows.push_back(std::vector<sf::Vector2f>());
-
-            std::vector<sf::Vector2f>& shadow = light->m_shadows.back();
-
-            shadow.push_back(poly[i1]);
-
-            unsigned i = i1;
-
-            while (i != i2)
-            {
-                i = (i + 1u) % poly.size();
-                shadow.push_back(poly[i]);
-            }
-
-            const sf::Vector2f z1 = poly[i1];
-            const sf::Vector2f z2 = poly[i2];
-
-            //rmul must be large enough not to cause too short triangle to be
-            //created but it also must be
-            // small enough to not cause floating precision loss(?)
-            const float rmul = 1000.f;
-
-            const sf::Vector2f fly1 = setLength(poly[i1] - light->m_pos, rmul * light->m_radius);
-            const sf::Vector2f fly2 = setLength(poly[i2] - light->m_pos, rmul * light->m_radius);
-
-            shadow.push_back(poly[i2] + fly2);
-            shadow.push_back(poly[i1] + fly1);
-
-        }//for poly
+            light->m_inwall = true;
+        }
+        else
+        {
+            buildShadows();
+        }
     }//for light
 
     //make 'shadow'
 
+}
+
+void ShadowWorld::beginLight(Light * light)
+{
+    m_clight = light;
+    m_inwall = false;
+    light->m_inwall = false;
+    light->m_shadows.clear();
+    m_collected.clear();
+}
+
+class Query
+{
+
+public:
+
+    bool QueryCallback(int id)
+    {
+        ids.push_back(id);
+        return true;
+    }
+
+    std::vector<int> ids;
+};
+
+void ShadowWorld::collectPolys()
+{
+    b2AABB ab;
+
+    ab.lowerBound.x = m_clight->getPosition().x - m_clight->getRadius();
+    ab.lowerBound.y = m_clight->getPosition().y - m_clight->getRadius();
+
+    ab.upperBound.x = m_clight->getPosition().x + m_clight->getRadius();
+    ab.upperBound.y = m_clight->getPosition().y + m_clight->getRadius();
+
+    Query qr;
+    m_tree.Query(&qr, ab);
+
+    for (const int id : qr.ids)
+    {
+        CPoly cp;
+        auto sc = static_cast<ShadowCaster*> (m_tree.GetUserData(id));
+        cp.vert = &sc->m_vertices;
+        m_collected.push_back(cp);
+    }
+}
+
+void ShadowWorld::collectAngles()
+{
+    for (CPoly& cp : m_collected)
+    {
+        const PolyData& poly = *cp.vert;
+
+        const sf::Vector2f mid = getMid(poly);
+
+        const float ref = getAngle2(mid - m_clight->m_pos, pi);
+
+        float min = getAngle2(poly[0] - m_clight->m_pos, ref);
+        float max = min;
+        unsigned i1 = 0u, i2 = 0u;
+
+        for (int i = 0; i < poly.size(); ++i)
+        {
+            const sf::Vector2f d(poly[i] - m_clight->getPosition());
+
+            const float b = getAngle2(poly[i] - m_clight -> m_pos, ref);
+            const auto v = poly[i] - m_clight->m_pos;
+
+            if (min > b)
+            {
+                i1 = i;
+                min = b;
+            }
+
+            if (max < b)
+            {
+                i2 = i;
+                max = b;
+            }
+        }
+
+        cp.i1 = i1;
+        cp.i2 = i2;
+
+        if ((max - min) > pi) //is that right? -not right for very thin shapes
+        {
+            m_inwall = true; //light is in wall
+            return;
+        }
+    }//for each collected poly
+}
+
+bool ShadowWorld::inWall()
+{
+    return m_inwall;
+}
+
+void ShadowWorld::buildShadows()
+{
+    for (const CPoly& cp : m_collected)
+    {
+        m_clight->m_shadows.push_back(PolyData());
+        PolyData& shadow = m_clight->m_shadows.back();
+        const PolyData& poly = *cp.vert;
+        const unsigned i1 = cp.i1;
+        const unsigned i2 = cp.i2;
+
+        unsigned i = i1;
+        shadow.push_back(poly[i]);
+
+        while (i != i2)
+        {
+            i = (i + 1u) % poly.size();
+            shadow.push_back(poly[i]);
+        }
+
+        const sf::Vector2f z1 = poly[i1];
+        const sf::Vector2f z2 = poly[i2];
+
+        //rmul must be large enough not to cause too short triangle to be
+        //created but it also must be
+        // small enough to not cause floating precision loss(?)
+        const float rmul = 1000.f;
+
+        const sf::Vector2f fly1 = setLength(poly[i1] - m_clight->m_pos, rmul * m_clight->m_radius);
+        const sf::Vector2f fly2 = setLength(poly[i2] - m_clight->m_pos, rmul * m_clight->m_radius);
+
+        shadow.push_back(poly[i2] + fly2);
+        shadow.push_back(poly[i1] + fly1);
+
+    }//for each collected poly
+}
+
+void ShadowWorld::endLight(Light * light)
+{
+    m_clight = nullptr;
 }
 
 

@@ -13,6 +13,8 @@
 #include <memory>
 #include <SFML/System/Vector2.hpp>
 #include "PI.hpp"
+#include "ShadowCaster.hpp"
+#include <Box2D/Collision/b2DynamicTree.h>
 
 namespace ee {
 
@@ -29,23 +31,37 @@ public:
 
 
 private:
-    typedef std::vector<sf::Vector2f> Polygon;
+    typedef std::vector<sf::Vector2f> PolyData;
+
+    void beginLight(Light * light);
+
+    void collectPolys();
+    void collectAngles();
+    bool inWall();
+    void buildShadows();
+    void endLight(Light * light);
+
+
+    bool m_inwall;
+
+    class CPoly
+    {
+
+    public:
+        const PolyData * vert;
+        unsigned i1, i2;
+    };
+
+    std::vector<CPoly> m_collected;
     
-    void beginLight(Light * l);
+    Light * m_clight;
+
     
-    void calcMinMax(Light * l,const Polygon& p);
-    
-    bool insidePoly();
-    
-    
-    
-    void endLight(Light * l);
-    
-    std::vector<sf::Vector2f> m_minmax;
+    b2DynamicTree m_tree;
     
 public://delme
     //private:
-    std::vector<std::vector<sf::Vector2f> > m_polys;
+    std::vector<std::unique_ptr<ShadowCaster>> m_polys;
 
     std::vector<std::unique_ptr<Light> > m_lights;
 

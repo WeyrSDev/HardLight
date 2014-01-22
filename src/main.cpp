@@ -49,14 +49,14 @@ int main()
 
     lit->setColor(sf::Color::Red);
 
-    const float off = 2.f;
+    const float off = 5.f;
     std::vector<sf::Vector2f> pl;
     pl.push_back(sf::Vector2f(300.f, 300.f));
     pl.push_back(sf::Vector2f(500.f, 300.f));
     pl.push_back(sf::Vector2f(500.f, 300.f - off));
     pl.push_back(sf::Vector2f(300.f, 300.f - off));
 
-    shw.m_polys.push_back(pl);
+    shw.addShadowCaster(pl.data(), pl.size());
 
     int count = 0;
 
@@ -76,7 +76,7 @@ int main()
             {
                 std::vector<sf::Vector2f> poly;
                 makeHex(poly, sf::Vector2f(sf::Mouse::getPosition(app)));
-                shw.m_polys.push_back(poly);
+                shw.addShadowCaster(poly.data(), poly.size());
             }
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::A)
@@ -111,9 +111,11 @@ int main()
         app.draw(sf::Sprite(lp.getCanvas()));
 
         const sf::Vector2f mousepos(sf::Mouse::getPosition(app));
-
-        for (const std::vector<sf::Vector2f>& v : shw.m_polys)
+        
+        for (const std::unique_ptr<ee::ShadowCaster>& sc : shw.m_polys)
         {
+            const std::vector<sf::Vector2f>& v = sc->m_vertices;
+
             if (v.size() == 2u)
             {
                 gp.segment(v[0], v[1], sf::Color(255u, 0u, 0u, 127u));
