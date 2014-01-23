@@ -82,6 +82,8 @@ void ShadowWorld::update()
     for (const std::unique_ptr<Light>& light : m_lights)
     {
         light->m_shadows.clear();
+        light->m_cached.clear();
+
         m_currentlight = light.get();
 
         const sf::Vector2f p = light->getPosition();

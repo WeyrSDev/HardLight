@@ -45,6 +45,8 @@ private:
 public://delme
     
     std::vector<std::vector<sf::Vector2f >> m_shadows;
+    
+    std::vector<sf::Vector2f> m_cached;
 
 };
 

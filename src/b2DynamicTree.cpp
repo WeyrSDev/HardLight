@@ -43,6 +43,8 @@ b2DynamicTree::b2DynamicTree()
 
     m_path = 0;
     m_insertionCount = 0;
+
+    m_padding = 0.f;
 }
 
 b2DynamicTree::~b2DynamicTree()
@@ -114,7 +116,7 @@ int32 b2DynamicTree::CreateProxy(const b2AABB& aabb, ee::ShadowLine line)
     int32 proxyId = AllocateNode();
 
     // Fatten the aabb.
-    b2Vec2 r(b2_aabbExtension, b2_aabbExtension);
+    b2Vec2 r(m_padding, m_padding);
     m_nodes[proxyId].aabb.lowerBound = aabb.lowerBound - r;
     m_nodes[proxyId].aabb.upperBound = aabb.upperBound + r;
     m_nodes[proxyId].line = line;

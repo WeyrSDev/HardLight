@@ -106,38 +106,41 @@ void LightPainter::render(ShadowWorld& w)
     {
         Light * l = w.getLight(i);
 
-        clip.Clear();
-        clip::Polygons out(1u);
-        out[0] = circl(l->getPosition(), l->getRadius(), l->getAngle(), l->getSpread());
-
-        if (clip::Orientation(out[0])) clip::ReversePolygon(out[0]);
-
-        clip.AddPolygon(out[0], clip::ptSubject);
-
-        //DebugGeometryPainter gp(m_sumtex);
-        //auto a = translate(out[0]);
-        //gp.polygon(a.data(), a.size(), sf::Color::Blue);
-
-        for (const auto& v : l->m_shadows)
+        if (l->m_cached.empty())
         {
-            auto pl = translate(v);
-            clip::CleanPolygon(pl, 0.0); //to avoid segfaults from same points
-            if (clip::Orientation(pl)) clip::ReversePolygon(pl);
-            clip.AddPolygon(pl, clip::ptClip);
-        }//for poly
+            clip.Clear();
+            clip::Polygons out(1u);
+            out[0] = circl(l->getPosition(), l->getRadius(), l->getAngle(), l->getSpread());
 
-        //do not clip if there are no shadows
-        if (l->m_shadows.size() > 0u)
-        {
-            clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
+            if (clip::Orientation(out[0])) clip::ReversePolygon(out[0]);
+
+            clip.AddPolygon(out[0], clip::ptSubject);
+
+            //DebugGeometryPainter gp(m_sumtex);
+            //auto a = translate(out[0]);
+            //gp.polygon(a.data(), a.size(), sf::Color::Blue);
+
+            for (const auto& v : l->m_shadows)
+            {
+                auto pl = translate(v);
+                clip::CleanPolygon(pl, 0.0); //to avoid segfaults from same points
+                if (clip::Orientation(pl)) clip::ReversePolygon(pl);
+                clip.AddPolygon(pl, clip::ptClip);
+            }//for poly
+
+            //do not clip if there are no shadows
+            if (l->m_shadows.size() > 0u)
+            {
+                clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
+            }
+
+            if (out.size() > 0u) l->m_cached = translate(out[0]);
         }
 
-        if (out.size() > 0u)
-        {
-            const auto poly = translate(out[0]);
-            sf::Shader * frag = m_fragenabled?&m_frag:nullptr;
-            drawBlendedLight(m_sumtex, frag, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor());
-        }
+        const auto& poly = l->m_cached;
+        sf::Shader * frag = m_fragenabled?&m_frag:nullptr;
+        drawBlendedLight(m_sumtex, frag, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor());
+
     }//for light
 
     m_sumtex.display();

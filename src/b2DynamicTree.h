@@ -168,6 +168,8 @@ private:
     int32 m_insertionCount;
 
     std::vector<int> m_indices;
+    
+    float m_padding;
 
 };
 
