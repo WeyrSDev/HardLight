@@ -6,10 +6,6 @@
 #include "ShadowWorld.hpp"
 #include "LightPainter.hpp"
 
-//const float polyscale = 1000.f;
-
-namespace clip = ClipperLib;
-
 /*
  sort out weird crap with -y faking too?
  */
@@ -41,7 +37,7 @@ int main()
     ee::ShadowWorld shw;
     ee::LightPainter lp;
     lp.setSize(640u, 480u);
-    lp.enableFragFromFile("light.frag");
+    //lp.enableFragFromFile("light.frag");
 
     ee::Light * lit = shw.addLight({0.f, 0.f}, 100.f);
     //lit->setColor(sf::Color::Red);
