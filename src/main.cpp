@@ -2,7 +2,6 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <polyclipping/clipper.hpp>
-#include <QtCore/qglobal.h>
 #include "DebugGeometryPainter.hpp"
 #include "ShadowWorld.hpp"
 #include "LightPainter.hpp"
