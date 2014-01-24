@@ -125,27 +125,5 @@ typedef double float64;
 /// A body cannot sleep if its angular velocity is above this tolerance.
 #define b2_angularSleepTolerance	(2.0f / 180.0f * b2_pi)
 
-// Memory Allocation
-
-/// Implement this function to use your own memory allocator.
-void* b2Alloc(int32 size);
-
-/// If you implement b2Alloc, you should also implement this function.
-void b2Free(void* mem);
-
-/// Logging function.
-void b2Log(const char* string, ...);
-
-/// Version numbering scheme.
-/// See http://en.wikipedia.org/wiki/Software_versioning
-struct b2Version
-{
-	int32 major;		///< significant changes
-	int32 minor;		///< incremental changes
-	int32 revision;		///< bug fixes
-};
-
-/// Current version.
-extern b2Version b2_version;
 
 #endif
