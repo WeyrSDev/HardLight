@@ -17,7 +17,6 @@
 */
 
 #include "b2Collision.h"
-#include "b2Distance.h"
 
 // From Real-time Collision Detection, p179.
 bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
