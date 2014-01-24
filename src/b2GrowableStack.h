@@ -18,15 +18,15 @@
 
 #ifndef B2_GROWABLE_STACK_H
 #define B2_GROWABLE_STACK_H
-#include <Box2D/Common/b2Settings.h>
+
 #include <cassert>
-#include <memory.h>
+#include <cstring>
 
 /// This is a growable LIFO stack with an initial capacity of N.
 /// If the stack size exceeds the initial capacity, the heap is used
 /// to increase the size of the stack.
 
-template <typename T, int32 N>
+template <typename T, int N>
 class b2GrowableStack
 {
 
@@ -52,10 +52,10 @@ public:
     {
         if (m_count == m_capacity)
         {
-            T* old = m_stack;
+            T * old = m_stack;
             m_capacity *= 2;
             m_stack = new T[m_capacity];
-            memcpy(m_stack, old, m_count * sizeof (T));
+            std::memcpy(m_stack, old, m_count * sizeof (T));
             if (old != m_array)
             {
                 delete [] old;
@@ -73,16 +73,16 @@ public:
         return m_stack[m_count];
     }
 
-    int32 GetCount()
+    int GetCount()
     {
         return m_count;
     }
 
 private:
-    T* m_stack;
+    T * m_stack;
     T m_array[N];
-    int32 m_count;
-    int32 m_capacity;
+    int m_count;
+    int m_capacity;
 };
 
 
