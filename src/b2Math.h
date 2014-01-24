@@ -23,23 +23,23 @@
 #include <math.h>
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
-inline bool b2IsValid(float32 x)
+inline bool b2IsValid(float x)
 {
 	int ix = *reinterpret_cast<int*>(&x);
 	return (ix & 0x7f800000) != 0x7f800000;
 }
 
 /// This is a approximate yet fast inverse square-root.
-inline float32 b2InvSqrt(float32 x)
+inline float b2InvSqrt(float x)
 {
 	union
 	{
-		float32 x;
+		float x;
 		int i;
 	} convert;
 
 	convert.x = x;
-	float32 xhalf = 0.5f * x;
+	float xhalf = 0.5f * x;
 	convert.i = 0x5f3759df - (convert.i >> 1);
 	x = convert.x;
 	x = x * (1.5f - xhalf * x * x);
@@ -56,25 +56,25 @@ struct b2Vec2
 	b2Vec2() {}
 
 	/// Construct using coordinates.
-	b2Vec2(float32 x, float32 y) : x(x), y(y) {}
+	b2Vec2(float x, float y) : x(x), y(y) {}
 
 	/// Set this vector to all zeros.
 	void SetZero() { x = 0.0f; y = 0.0f; }
 
 	/// Set this vector to some specified coordinates.
-	void Set(float32 x_, float32 y_) { x = x_; y = y_; }
+	void Set(float x_, float y_) { x = x_; y = y_; }
 
 	/// Negate this vector.
 	b2Vec2 operator -() const { b2Vec2 v; v.Set(-x, -y); return v; }
 	
 	/// Read from and indexed element.
-	float32 operator () (int i) const
+	float operator () (int i) const
 	{
 		return (&x)[i];
 	}
 
 	/// Write to an indexed element.
-	float32& operator () (int i)
+	float& operator () (int i)
 	{
 		return (&x)[i];
 	}
@@ -92,33 +92,33 @@ struct b2Vec2
 	}
 
 	/// Multiply this vector by a scalar.
-	void operator *= (float32 a)
+	void operator *= (float a)
 	{
 		x *= a; y *= a;
 	}
 
 	/// Get the length of this vector (the norm).
-	float32 Length() const
+	float Length() const
 	{
 		return b2Sqrt(x * x + y * y);
 	}
 
 	/// Get the length squared. For performance, use this instead of
 	/// b2Vec2::Length (if possible).
-	float32 LengthSquared() const
+	float LengthSquared() const
 	{
 		return x * x + y * y;
 	}
 
 	/// Convert this vector into a unit vector. Returns the length.
-	float32 Normalize()
+	float Normalize()
 	{
-		float32 length = Length();
+		float length = Length();
 		if (length < b2_epsilon)
 		{
 			return 0.0f;
 		}
-		float32 invLength = 1.0f / length;
+		float invLength = 1.0f / length;
 		x *= invLength;
 		y *= invLength;
 
@@ -137,31 +137,31 @@ struct b2Vec2
 		return b2Vec2(-y, x);
 	}
 
-	float32 x, y;
+	float x, y;
 };
 
 /// Perform the dot product on two vectors.
-inline float32 b2Dot(const b2Vec2& a, const b2Vec2& b)
+inline float b2Dot(const b2Vec2& a, const b2Vec2& b)
 {
 	return a.x * b.x + a.y * b.y;
 }
 
 /// Perform the cross product on two vectors. In 2D this produces a scalar.
-inline float32 b2Cross(const b2Vec2& a, const b2Vec2& b)
+inline float b2Cross(const b2Vec2& a, const b2Vec2& b)
 {
 	return a.x * b.y - a.y * b.x;
 }
 
 /// Perform the cross product on a vector and a scalar. In 2D this produces
 /// a vector.
-inline b2Vec2 b2Cross(const b2Vec2& a, float32 s)
+inline b2Vec2 b2Cross(const b2Vec2& a, float s)
 {
 	return b2Vec2(s * a.y, -s * a.x);
 }
 
 /// Perform the cross product on a scalar and a vector. In 2D this produces
 /// a vector.
-inline b2Vec2 b2Cross(float32 s, const b2Vec2& a)
+inline b2Vec2 b2Cross(float s, const b2Vec2& a)
 {
 	return b2Vec2(-s * a.y, s * a.x);
 }
@@ -181,7 +181,7 @@ inline b2Vec2 operator - (const b2Vec2& a, const b2Vec2& b)
 	return b2Vec2(a.x - b.x, a.y - b.y);
 }
 
-inline b2Vec2 operator * (float32 s, const b2Vec2& a)
+inline b2Vec2 operator * (float s, const b2Vec2& a)
 {
 	return b2Vec2(s * a.x, s * a.y);
 }
@@ -191,13 +191,13 @@ inline bool operator == (const b2Vec2& a, const b2Vec2& b)
 	return a.x == b.x && a.y == b.y;
 }
 
-inline float32 b2Distance(const b2Vec2& a, const b2Vec2& b)
+inline float b2Distance(const b2Vec2& a, const b2Vec2& b)
 {
 	b2Vec2 c = a - b;
 	return c.Length();
 }
 
-inline float32 b2DistanceSquared(const b2Vec2& a, const b2Vec2& b)
+inline float b2DistanceSquared(const b2Vec2& a, const b2Vec2& b)
 {
 	b2Vec2 c = a - b;
 	return b2Dot(c, c);

@@ -22,8 +22,8 @@
 // From Real-time Collision Detection, p179.
 bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 {
-	float32 tmin = -b2_maxFloat;
-	float32 tmax = b2_maxFloat;
+	float tmin = -b2_maxFloat;
+	float tmax = b2_maxFloat;
 
 	b2Vec2 p = input.p1;
 	b2Vec2 d = input.p2 - input.p1;
@@ -31,7 +31,7 @@ bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 
 	b2Vec2 normal;
 
-	for (int32 i = 0; i < 2; ++i)
+	for (int i = 0; i < 2; ++i)
 	{
 		if (absD(i) < b2_epsilon)
 		{
@@ -43,12 +43,12 @@ bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 		}
 		else
 		{
-			float32 inv_d = 1.0f / d(i);
-			float32 t1 = (lowerBound(i) - p(i)) * inv_d;
-			float32 t2 = (upperBound(i) - p(i)) * inv_d;
+			float inv_d = 1.0f / d(i);
+			float t1 = (lowerBound(i) - p(i)) * inv_d;
+			float t2 = (upperBound(i) - p(i)) * inv_d;
 
 			// Sign of the normal vector.
-			float32 s = -1.0f;
+			float s = -1.0f;
 
 			if (t1 > t2)
 			{

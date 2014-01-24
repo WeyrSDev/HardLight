@@ -27,13 +27,13 @@
 /// queries, and TOI queries.
 
 
-const uint8 b2_nullFeature = UCHAR_MAX;
+const unsigned char b2_nullFeature = UCHAR_MAX;
 
 /// Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
 struct b2RayCastInput
 {
 	b2Vec2 p1, p2;
-	float32 maxFraction;
+	float maxFraction;
 };
 
 /// Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and p2
@@ -41,7 +41,7 @@ struct b2RayCastInput
 struct b2RayCastOutput
 {
 	b2Vec2 normal;
-	float32 fraction;
+	float fraction;
 };
 
 /// An axis aligned bounding box.
@@ -63,10 +63,10 @@ struct b2AABB
 	}
 
 	/// Get the perimeter length
-	float32 GetPerimeter() const
+	float GetPerimeter() const
 	{
-		float32 wx = upperBound.x - lowerBound.x;
-		float32 wy = upperBound.y - lowerBound.y;
+		float wx = upperBound.x - lowerBound.x;
+		float wy = upperBound.y - lowerBound.y;
 		return 2.0f * (wx + wy);
 	}
 
