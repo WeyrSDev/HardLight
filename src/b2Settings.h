@@ -19,14 +19,10 @@
 #ifndef B2_SETTINGS_H
 #define B2_SETTINGS_H
 
-#include <stddef.h>
-#include <assert.h>
+#include <cassert>
 #include <float.h>
 
 #define B2_NOT_USED(x) ((void)(x))
-#define b2Assert(A) assert(A)
-
-typedef unsigned char uint8;
 
 #define	b2_maxFloat		FLT_MAX
 #define	b2_epsilon		FLT_EPSILON
