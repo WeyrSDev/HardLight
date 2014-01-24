@@ -35,7 +35,7 @@ bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 
     b2Vec2 p = input.p1;
     b2Vec2 d = input.p2 - input.p1;
-    b2Vec2 absD(std::abs(d.x),std::abs(d.y));
+    b2Vec2 absD(std::abs(d.x), std::abs(d.y));
 
     b2Vec2 normal;
 

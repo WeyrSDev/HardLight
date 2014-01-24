@@ -31,149 +31,187 @@
 const int b2_nullNode = -1;
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
+
 inline bool b2IsValid(float x)
 {
-	int ix = *reinterpret_cast<int*>(&x);
-	return (ix & 0x7f800000) != 0x7f800000;
+    int ix = *reinterpret_cast<int*> (&x);
+    return (ix & 0x7f800000) != 0x7f800000;
 }
 
 /// A 2D column vector.
+
 struct b2Vec2
 {
-	/// Default constructor does nothing (for performance).
-	b2Vec2() {}
 
-	/// Construct using coordinates.
-	b2Vec2(float x, float y) : x(x), y(y) {}
+    /// Default constructor does nothing (for performance).
 
-	/// Set this vector to all zeros.
-	void SetZero() { x = 0.0f; y = 0.0f; }
+    b2Vec2() { }
 
-	/// Set this vector to some specified coordinates.
-	void Set(float x_, float y_) { x = x_; y = y_; }
+    /// Construct using coordinates.
 
-	/// Negate this vector.
-	b2Vec2 operator -() const { b2Vec2 v; v.Set(-x, -y); return v; }
-	
-	/// Read from and indexed element.
-	float operator () (int i) const
-	{
-		return (&x)[i];
-	}
+    b2Vec2(float x, float y) : x(x), y(y) { }
 
-	/// Write to an indexed element.
-	float& operator () (int i)
-	{
-		return (&x)[i];
-	}
+    /// Set this vector to all zeros.
 
-	/// Add a vector to this vector.
-	void operator += (const b2Vec2& v)
-	{
-		x += v.x; y += v.y;
-	}
-	
-	/// Subtract a vector from this vector.
-	void operator -= (const b2Vec2& v)
-	{
-		x -= v.x; y -= v.y;
-	}
+    void SetZero()
+    {
+        x = 0.0f;
+        y = 0.0f;
+    }
 
-	/// Multiply this vector by a scalar.
-	void operator *= (float a)
-	{
-		x *= a; y *= a;
-	}
+    /// Set this vector to some specified coordinates.
 
-	/// Get the length of this vector (the norm).
-	float Length() const
-	{
-		return std::sqrt(x * x + y * y);
-	}
+    void Set(float x_, float y_)
+    {
+        x = x_;
+        y = y_;
+    }
 
-	/// Get the length squared. For performance, use this instead of
-	/// b2Vec2::Length (if possible).
-	float LengthSquared() const
-	{
-		return x * x + y * y;
-	}
+    /// Negate this vector.
 
-	/// Convert this vector into a unit vector. Returns the length.
-	float Normalize()
-	{
-		float length = Length();
-		if (length < std::numeric_limits<float>::epsilon())
-		{
-			return 0.0f;
-		}
-		float invLength = 1.0f / length;
-		x *= invLength;
-		y *= invLength;
+    b2Vec2 operator -() const
+    {
+        b2Vec2 v;
+        v.Set(-x, -y);
+        return v;
+    }
 
-		return length;
-	}
+    /// Read from and indexed element.
 
-	/// Does this vector contain finite coordinates?
-	bool IsValid() const
-	{
-		return b2IsValid(x) && b2IsValid(y);
-	}
+    float operator () (int i) const
+    {
+        return (&x)[i];
+    }
 
-	float x, y;
+    /// Write to an indexed element.
+
+    float& operator () (int i)
+    {
+        return (&x)[i];
+    }
+
+    /// Add a vector to this vector.
+
+    void operator +=(const b2Vec2& v)
+    {
+        x += v.x;
+        y += v.y;
+    }
+
+    /// Subtract a vector from this vector.
+
+    void operator -=(const b2Vec2& v)
+    {
+        x -= v.x;
+        y -= v.y;
+    }
+
+    /// Multiply this vector by a scalar.
+
+    void operator *=(float a)
+    {
+        x *= a;
+        y *= a;
+    }
+
+    /// Get the length of this vector (the norm).
+
+    float Length() const
+    {
+        return std::sqrt(x * x + y * y);
+    }
+
+    /// Get the length squared. For performance, use this instead of
+    /// b2Vec2::Length (if possible).
+
+    float LengthSquared() const
+    {
+        return x * x + y * y;
+    }
+
+    /// Convert this vector into a unit vector. Returns the length.
+
+    float Normalize()
+    {
+        float length = Length();
+        if (length < std::numeric_limits<float>::epsilon())
+        {
+            return 0.0f;
+        }
+        float invLength = 1.0f / length;
+        x *= invLength;
+        y *= invLength;
+
+        return length;
+    }
+
+    /// Does this vector contain finite coordinates?
+
+    bool IsValid() const
+    {
+        return b2IsValid(x) && b2IsValid(y);
+    }
+
+    float x, y;
 };
 
 /// Perform the dot product on two vectors.
+
 inline float b2Dot(const b2Vec2& a, const b2Vec2& b)
 {
-	return a.x * b.x + a.y * b.y;
+    return a.x * b.x + a.y * b.y;
 }
 
 /// Perform the cross product on two vectors. In 2D this produces a scalar.
+
 inline float b2Cross(const b2Vec2& a, const b2Vec2& b)
 {
-	return a.x * b.y - a.y * b.x;
+    return a.x * b.y - a.y * b.x;
 }
 
 /// Perform the cross product on a scalar and a vector. In 2D this produces
 /// a vector.
+
 inline b2Vec2 b2Cross(float s, const b2Vec2& a)
 {
-	return b2Vec2(-s * a.y, s * a.x);
+    return b2Vec2(-s * a.y, s * a.x);
 }
 
 /// Multiply a matrix times a vector. If a rotation matrix is provided,
 /// then this transforms the vector from one frame to another.
 
 /// Add two vectors component-wise.
-inline b2Vec2 operator + (const b2Vec2& a, const b2Vec2& b)
+
+inline b2Vec2 operator +(const b2Vec2& a, const b2Vec2& b)
 {
-	return b2Vec2(a.x + b.x, a.y + b.y);
+    return b2Vec2(a.x + b.x, a.y + b.y);
 }
 
 /// Subtract two vectors component-wise.
-inline b2Vec2 operator - (const b2Vec2& a, const b2Vec2& b)
+
+inline b2Vec2 operator -(const b2Vec2& a, const b2Vec2& b)
 {
-	return b2Vec2(a.x - b.x, a.y - b.y);
+    return b2Vec2(a.x - b.x, a.y - b.y);
 }
 
-inline b2Vec2 operator * (float s, const b2Vec2& a)
+inline b2Vec2 operator *(float s, const b2Vec2& a)
 {
-	return b2Vec2(s * a.x, s * a.y);
+    return b2Vec2(s * a.x, s * a.y);
 }
 
-inline bool operator == (const b2Vec2& a, const b2Vec2& b)
+inline bool operator ==(const b2Vec2& a, const b2Vec2& b)
 {
-	return a.x == b.x && a.y == b.y;
+    return a.x == b.x && a.y == b.y;
 }
 
 inline b2Vec2 b2Min(const b2Vec2& a, const b2Vec2& b)
 {
-	return b2Vec2(std::min(a.x, b.x), std::min(a.y, b.y));
+    return b2Vec2(std::min(a.x, b.x), std::min(a.y, b.y));
 }
 
 inline b2Vec2 b2Max(const b2Vec2& a, const b2Vec2& b)
 {
-	return b2Vec2(std::max(a.x, b.x), std::max(a.y, b.y));
+    return b2Vec2(std::max(a.x, b.x), std::max(a.y, b.y));
 }
 
 /// This is a growable LIFO stack with an initial capacity of N.
@@ -240,100 +278,112 @@ private:
 };
 
 /// Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+
 struct b2RayCastInput
 {
-	b2Vec2 p1, p2;
-	float maxFraction;
+
+    b2Vec2 p1, p2;
+    float maxFraction;
 };
 
 /// Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and p2
 /// come from b2RayCastInput.
+
 struct b2RayCastOutput
 {
-	b2Vec2 normal;
-	float fraction;
+
+    b2Vec2 normal;
+    float fraction;
 };
 
 /// An axis aligned bounding box.
+
 struct b2AABB
 {
-	/// Verify that the bounds are sorted.
-	bool IsValid() const;
 
-	/// Get the center of the AABB.
-	b2Vec2 GetCenter() const
-	{
-		return 0.5f * (lowerBound + upperBound);
-	}
+    /// Verify that the bounds are sorted.
+    bool IsValid() const;
 
-	/// Get the extents of the AABB (half-widths).
-	b2Vec2 GetExtents() const
-	{
-		return 0.5f * (upperBound - lowerBound);
-	}
+    /// Get the center of the AABB.
 
-	/// Get the perimeter length
-	float GetPerimeter() const
-	{
-		float wx = upperBound.x - lowerBound.x;
-		float wy = upperBound.y - lowerBound.y;
-		return 2.0f * (wx + wy);
-	}
+    b2Vec2 GetCenter() const
+    {
+        return 0.5f * (lowerBound + upperBound);
+    }
 
-	/// Combine an AABB into this one.
-	void Combine(const b2AABB& aabb)
-	{
-		lowerBound = b2Min(lowerBound, aabb.lowerBound);
-		upperBound = b2Max(upperBound, aabb.upperBound);
-	}
+    /// Get the extents of the AABB (half-widths).
 
-	/// Combine two AABBs into this one.
-	void Combine(const b2AABB& aabb1, const b2AABB& aabb2)
-	{
-		lowerBound = b2Min(aabb1.lowerBound, aabb2.lowerBound);
-		upperBound = b2Max(aabb1.upperBound, aabb2.upperBound);
-	}
+    b2Vec2 GetExtents() const
+    {
+        return 0.5f * (upperBound - lowerBound);
+    }
 
-	/// Does this aabb contain the provided AABB.
-	bool Contains(const b2AABB& aabb) const
-	{
-		bool result = true;
-		result = result && lowerBound.x <= aabb.lowerBound.x;
-		result = result && lowerBound.y <= aabb.lowerBound.y;
-		result = result && aabb.upperBound.x <= upperBound.x;
-		result = result && aabb.upperBound.y <= upperBound.y;
-		return result;
-	}
+    /// Get the perimeter length
 
-	bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
+    float GetPerimeter() const
+    {
+        float wx = upperBound.x - lowerBound.x;
+        float wy = upperBound.y - lowerBound.y;
+        return 2.0f * (wx + wy);
+    }
 
-	b2Vec2 lowerBound;	///< the lower vertex
-	b2Vec2 upperBound;	///< the upper vertex
+    /// Combine an AABB into this one.
+
+    void Combine(const b2AABB& aabb)
+    {
+        lowerBound = b2Min(lowerBound, aabb.lowerBound);
+        upperBound = b2Max(upperBound, aabb.upperBound);
+    }
+
+    /// Combine two AABBs into this one.
+
+    void Combine(const b2AABB& aabb1, const b2AABB& aabb2)
+    {
+        lowerBound = b2Min(aabb1.lowerBound, aabb2.lowerBound);
+        upperBound = b2Max(aabb1.upperBound, aabb2.upperBound);
+    }
+
+    /// Does this aabb contain the provided AABB.
+
+    bool Contains(const b2AABB& aabb) const
+    {
+        bool result = true;
+        result = result && lowerBound.x <= aabb.lowerBound.x;
+        result = result && lowerBound.y <= aabb.lowerBound.y;
+        result = result && aabb.upperBound.x <= upperBound.x;
+        result = result && aabb.upperBound.y <= upperBound.y;
+        return result;
+    }
+
+    bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
+
+    b2Vec2 lowerBound; ///< the lower vertex
+    b2Vec2 upperBound; ///< the upper vertex
 };
 
 // ---------------- Inline Functions ------------------------------------------
 
 inline bool b2AABB::IsValid() const
 {
-	b2Vec2 d = upperBound - lowerBound;
-	bool valid = d.x >= 0.0f && d.y >= 0.0f;
-	valid = valid && lowerBound.IsValid() && upperBound.IsValid();
-	return valid;
+    b2Vec2 d = upperBound - lowerBound;
+    bool valid = d.x >= 0.0f && d.y >= 0.0f;
+    valid = valid && lowerBound.IsValid() && upperBound.IsValid();
+    return valid;
 }
 
 inline bool b2TestOverlap(const b2AABB& a, const b2AABB& b)
 {
-	b2Vec2 d1, d2;
-	d1 = b.lowerBound - a.upperBound;
-	d2 = a.lowerBound - b.upperBound;
+    b2Vec2 d1, d2;
+    d1 = b.lowerBound - a.upperBound;
+    d2 = a.lowerBound - b.upperBound;
 
-	if (d1.x > 0.0f || d1.y > 0.0f)
-		return false;
+    if (d1.x > 0.0f || d1.y > 0.0f)
+        return false;
 
-	if (d2.x > 0.0f || d2.y > 0.0f)
-		return false;
+    if (d2.x > 0.0f || d2.y > 0.0f)
+        return false;
 
-	return true;
+    return true;
 }
 
 /// A node in the dynamic tree. The client does not interact with this directly.
@@ -443,7 +493,7 @@ public:
     int GetShadowLinesCount()const;
 
     ee::ShadowLine GetNthShadowLine(int index);
-    
+
     void ClearAll();
 
 private:
@@ -476,7 +526,7 @@ private:
     int m_insertionCount;
 
     std::vector<int> m_indices;
-    
+
     float m_padding;
 
 };
@@ -544,7 +594,7 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 
     // v is perpendicular to the segment.
     b2Vec2 v = b2Cross(1.0f, r);
-    b2Vec2 abs_v(std::abs(v.x),std::abs(v.y));
+    b2Vec2 abs_v(std::abs(v.x), std::abs(v.y));
 
     // Separating axis for segment (Gino, p80).
     // |dot(v, p1 - c)| > dot(|v|, h)
