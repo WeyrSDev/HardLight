@@ -20,7 +20,7 @@
 #define B2_MATH_H
 
 #include "b2Settings.h"
-#include <math.h>
+#include <cmath>
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
 inline bool b2IsValid(float x)
@@ -45,9 +45,6 @@ inline float b2InvSqrt(float x)
 	x = x * (1.5f - xhalf * x * x);
 	return x;
 }
-
-#define	b2Sqrt(x)	sqrtf(x)
-#define	b2Atan2(y, x)	atan2f(y, x)
 
 /// A 2D column vector.
 struct b2Vec2
@@ -100,7 +97,7 @@ struct b2Vec2
 	/// Get the length of this vector (the norm).
 	float Length() const
 	{
-		return b2Sqrt(x * x + y * y);
+		return std::sqrt(x * x + y * y);
 	}
 
 	/// Get the length squared. For performance, use this instead of
