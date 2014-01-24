@@ -20,13 +20,224 @@
 #define B2_DYNAMIC_TREE_H
 
 #include <vector>
-#include "b2Math.h"
-#include "b2GrowableStack.h"
+#include <cstring>
+#include <cassert>
+#include <cmath>
+#include <limits>
 #include "ShadowLine.hpp"
 #include "Light.hpp"
 
 
 const int b2_nullNode = -1;
+
+/// This function is used to ensure that a floating point number is not a NaN or infinity.
+inline bool b2IsValid(float x)
+{
+	int ix = *reinterpret_cast<int*>(&x);
+	return (ix & 0x7f800000) != 0x7f800000;
+}
+
+/// A 2D column vector.
+struct b2Vec2
+{
+	/// Default constructor does nothing (for performance).
+	b2Vec2() {}
+
+	/// Construct using coordinates.
+	b2Vec2(float x, float y) : x(x), y(y) {}
+
+	/// Set this vector to all zeros.
+	void SetZero() { x = 0.0f; y = 0.0f; }
+
+	/// Set this vector to some specified coordinates.
+	void Set(float x_, float y_) { x = x_; y = y_; }
+
+	/// Negate this vector.
+	b2Vec2 operator -() const { b2Vec2 v; v.Set(-x, -y); return v; }
+	
+	/// Read from and indexed element.
+	float operator () (int i) const
+	{
+		return (&x)[i];
+	}
+
+	/// Write to an indexed element.
+	float& operator () (int i)
+	{
+		return (&x)[i];
+	}
+
+	/// Add a vector to this vector.
+	void operator += (const b2Vec2& v)
+	{
+		x += v.x; y += v.y;
+	}
+	
+	/// Subtract a vector from this vector.
+	void operator -= (const b2Vec2& v)
+	{
+		x -= v.x; y -= v.y;
+	}
+
+	/// Multiply this vector by a scalar.
+	void operator *= (float a)
+	{
+		x *= a; y *= a;
+	}
+
+	/// Get the length of this vector (the norm).
+	float Length() const
+	{
+		return std::sqrt(x * x + y * y);
+	}
+
+	/// Get the length squared. For performance, use this instead of
+	/// b2Vec2::Length (if possible).
+	float LengthSquared() const
+	{
+		return x * x + y * y;
+	}
+
+	/// Convert this vector into a unit vector. Returns the length.
+	float Normalize()
+	{
+		float length = Length();
+		if (length < std::numeric_limits<float>::epsilon())
+		{
+			return 0.0f;
+		}
+		float invLength = 1.0f / length;
+		x *= invLength;
+		y *= invLength;
+
+		return length;
+	}
+
+	/// Does this vector contain finite coordinates?
+	bool IsValid() const
+	{
+		return b2IsValid(x) && b2IsValid(y);
+	}
+
+	float x, y;
+};
+
+/// Perform the dot product on two vectors.
+inline float b2Dot(const b2Vec2& a, const b2Vec2& b)
+{
+	return a.x * b.x + a.y * b.y;
+}
+
+/// Perform the cross product on two vectors. In 2D this produces a scalar.
+inline float b2Cross(const b2Vec2& a, const b2Vec2& b)
+{
+	return a.x * b.y - a.y * b.x;
+}
+
+/// Perform the cross product on a scalar and a vector. In 2D this produces
+/// a vector.
+inline b2Vec2 b2Cross(float s, const b2Vec2& a)
+{
+	return b2Vec2(-s * a.y, s * a.x);
+}
+
+/// Multiply a matrix times a vector. If a rotation matrix is provided,
+/// then this transforms the vector from one frame to another.
+
+/// Add two vectors component-wise.
+inline b2Vec2 operator + (const b2Vec2& a, const b2Vec2& b)
+{
+	return b2Vec2(a.x + b.x, a.y + b.y);
+}
+
+/// Subtract two vectors component-wise.
+inline b2Vec2 operator - (const b2Vec2& a, const b2Vec2& b)
+{
+	return b2Vec2(a.x - b.x, a.y - b.y);
+}
+
+inline b2Vec2 operator * (float s, const b2Vec2& a)
+{
+	return b2Vec2(s * a.x, s * a.y);
+}
+
+inline bool operator == (const b2Vec2& a, const b2Vec2& b)
+{
+	return a.x == b.x && a.y == b.y;
+}
+
+inline b2Vec2 b2Min(const b2Vec2& a, const b2Vec2& b)
+{
+	return b2Vec2(std::min(a.x, b.x), std::min(a.y, b.y));
+}
+
+inline b2Vec2 b2Max(const b2Vec2& a, const b2Vec2& b)
+{
+	return b2Vec2(std::max(a.x, b.x), std::max(a.y, b.y));
+}
+
+/// This is a growable LIFO stack with an initial capacity of N.
+/// If the stack size exceeds the initial capacity, the heap is used
+/// to increase the size of the stack.
+
+template <typename T, int N>
+class b2GrowableStack
+{
+
+public:
+
+    b2GrowableStack()
+    {
+        m_stack = m_array;
+        m_count = 0;
+        m_capacity = N;
+    }
+
+    ~b2GrowableStack()
+    {
+        if (m_stack != m_array)
+        {
+            delete [] m_stack;
+            m_stack = NULL;
+        }
+    }
+
+    void Push(const T& element)
+    {
+        if (m_count == m_capacity)
+        {
+            T * old = m_stack;
+            m_capacity *= 2;
+            m_stack = new T[m_capacity];
+            std::memcpy(m_stack, old, m_count * sizeof (T));
+            if (old != m_array)
+            {
+                delete [] old;
+            }
+        }
+
+        m_stack[m_count] = element;
+        ++m_count;
+    }
+
+    T Pop()
+    {
+        assert(m_count > 0);
+        --m_count;
+        return m_stack[m_count];
+    }
+
+    int GetCount()
+    {
+        return m_count;
+    }
+
+private:
+    T * m_stack;
+    T m_array[N];
+    int m_count;
+    int m_capacity;
+};
 
 /// Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
 struct b2RayCastInput
@@ -333,7 +544,7 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 
     // v is perpendicular to the segment.
     b2Vec2 v = b2Cross(1.0f, r);
-    b2Vec2 abs_v = b2Abs(v);
+    b2Vec2 abs_v(std::abs(v.x),std::abs(v.y));
 
     // Separating axis for segment (Gino, p80).
     // |dot(v, p1 - c)| > dot(|v|, h)
@@ -370,7 +581,7 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
         // |dot(v, p1 - c)| > dot(|v|, h)
         b2Vec2 c = node->aabb.GetCenter();
         b2Vec2 h = node->aabb.GetExtents();
-        float separation = b2Abs(b2Dot(v, p1 - c)) - b2Dot(abs_v, h);
+        float separation = std::abs(b2Dot(v, p1 - c)) - b2Dot(abs_v, h);
         if (separation > 0.0f)
         {
             continue;

@@ -20,23 +20,28 @@
 #include <cstring>
 #include <algorithm>
 #include <cassert>
+#include <limits>
+
+
+
+
 
 // From Real-time Collision Detection, p179.
 
 bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 {
-    float tmin = -b2_maxFloat;
-    float tmax = b2_maxFloat;
+    float tmin = std::numeric_limits<float>::min();
+    float tmax = std::numeric_limits<float>::max();
 
     b2Vec2 p = input.p1;
     b2Vec2 d = input.p2 - input.p1;
-    b2Vec2 absD = b2Abs(d);
+    b2Vec2 absD(std::abs(d.x),std::abs(d.y));
 
     b2Vec2 normal;
 
     for (int i = 0; i < 2; ++i)
     {
-        if (absD(i) < b2_epsilon)
+        if (absD(i) < std::numeric_limits<float>::epsilon())
         {
             // Parallel.
             if (p(i) < lowerBound(i) || upperBound(i) < p(i))
@@ -55,7 +60,7 @@ bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
 
             if (t1 > t2)
             {
-                b2Swap(t1, t2);
+                std::swap(t1, t2);
                 s = 1.0f;
             }
 
@@ -68,7 +73,7 @@ bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
             }
 
             // Pull the max down
-            tmax = b2Min(tmax, t2);
+            tmax = std::min(tmax, t2);
 
             if (tmin > tmax)
             {
@@ -231,7 +236,7 @@ bool b2DynamicTree::MoveProxy(int proxyId, const b2AABB& aabb, const b2Vec2& dis
     b.upperBound = b.upperBound + r;
 
     // Predict AABB displacement.
-    b2Vec2 d = b2_aabbMultiplier * displacement;
+    b2Vec2 d = 2.f * displacement; //b2_aabbMultiplier
 
     if (d.x < 0.0f)
     {
@@ -388,7 +393,7 @@ void b2DynamicTree::InsertLeaf(int leaf)
         assert(child1 != b2_nullNode);
         assert(child2 != b2_nullNode);
 
-        m_nodes[index].height = 1 + b2Max(m_nodes[child1].height, m_nodes[child2].height);
+        m_nodes[index].height = 1 + std::max(m_nodes[child1].height, m_nodes[child2].height);
         m_nodes[index].aabb.Combine(m_nodes[child1].aabb, m_nodes[child2].aabb);
 
         index = m_nodes[index].parent;
@@ -441,7 +446,7 @@ void b2DynamicTree::RemoveLeaf(int leaf)
             int child2 = m_nodes[index].child2;
 
             m_nodes[index].aabb.Combine(m_nodes[child1].aabb, m_nodes[child2].aabb);
-            m_nodes[index].height = 1 + b2Max(m_nodes[child1].height, m_nodes[child2].height);
+            m_nodes[index].height = 1 + std::max(m_nodes[child1].height, m_nodes[child2].height);
 
             index = m_nodes[index].parent;
         }
@@ -521,8 +526,8 @@ int b2DynamicTree::Balance(int iA)
             A->aabb.Combine(B->aabb, G->aabb);
             C->aabb.Combine(A->aabb, F->aabb);
 
-            A->height = 1 + b2Max(B->height, G->height);
-            C->height = 1 + b2Max(A->height, F->height);
+            A->height = 1 + std::max(B->height, G->height);
+            C->height = 1 + std::max(A->height, F->height);
         }
         else
         {
@@ -532,8 +537,8 @@ int b2DynamicTree::Balance(int iA)
             A->aabb.Combine(B->aabb, F->aabb);
             C->aabb.Combine(A->aabb, G->aabb);
 
-            A->height = 1 + b2Max(B->height, F->height);
-            C->height = 1 + b2Max(A->height, G->height);
+            A->height = 1 + std::max(B->height, F->height);
+            C->height = 1 + std::max(A->height, G->height);
         }
 
         return iC;
@@ -581,8 +586,8 @@ int b2DynamicTree::Balance(int iA)
             A->aabb.Combine(C->aabb, E->aabb);
             B->aabb.Combine(A->aabb, D->aabb);
 
-            A->height = 1 + b2Max(C->height, E->height);
-            B->height = 1 + b2Max(A->height, D->height);
+            A->height = 1 + std::max(C->height, E->height);
+            B->height = 1 + std::max(A->height, D->height);
         }
         else
         {
@@ -592,8 +597,8 @@ int b2DynamicTree::Balance(int iA)
             A->aabb.Combine(C->aabb, D->aabb);
             B->aabb.Combine(A->aabb, E->aabb);
 
-            A->height = 1 + b2Max(C->height, D->height);
-            B->height = 1 + b2Max(A->height, E->height);
+            A->height = 1 + std::max(C->height, D->height);
+            B->height = 1 + std::max(A->height, E->height);
         }
 
         return iB;
@@ -654,7 +659,7 @@ int b2DynamicTree::ComputeHeight(int nodeId) const
 
     int height1 = ComputeHeight(node->child1);
     int height2 = ComputeHeight(node->child2);
-    return 1 + b2Max(height1, height2);
+    return 1 + std::max(height1, height2);
 }
 
 int b2DynamicTree::ComputeHeight() const
@@ -724,7 +729,7 @@ void b2DynamicTree::ValidateMetrics(int index) const
     int height1 = m_nodes[child1].height;
     int height2 = m_nodes[child2].height;
     int height;
-    height = 1 + b2Max(height1, height2);
+    height = 1 + std::max(height1, height2);
     assert(node->height == height);
 
     b2AABB aabb;
@@ -771,8 +776,8 @@ int b2DynamicTree::GetMaxBalance() const
 
         int child1 = node->child1;
         int child2 = node->child2;
-        int balance = b2Abs(m_nodes[child2].height - m_nodes[child1].height);
-        maxBalance = b2Max(maxBalance, balance);
+        int balance = std::abs(m_nodes[child2].height - m_nodes[child1].height);
+        maxBalance = std::max(maxBalance, balance);
     }
 
     return maxBalance;
@@ -806,7 +811,7 @@ void b2DynamicTree::RebuildBottomUp()
 
     while (count > 1)
     {
-        float minCost = b2_maxFloat;
+        float minCost = std::numeric_limits<float>::max();
         int iMin = -1, jMin = -1;
         for (int i = 0; i < count; ++i)
         {
@@ -836,7 +841,7 @@ void b2DynamicTree::RebuildBottomUp()
         b2TreeNode* parent = m_nodes + parentIndex;
         parent->child1 = index1;
         parent->child2 = index2;
-        parent->height = 1 + b2Max(child1->height, child2->height);
+        parent->height = 1 + std::max(child1->height, child2->height);
         parent->aabb.Combine(child1->aabb, child2->aabb);
         parent->parent = b2_nullNode;
 
