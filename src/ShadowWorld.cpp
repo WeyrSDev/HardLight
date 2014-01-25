@@ -32,6 +32,15 @@ clip::Polygon translate(const std::vector<sf::Vector2f>& in)
     return out;
 }
 
+clip::Polygon translate(const Shadow& sh)
+{
+    clip::Polygon out;
+
+    for (unsigned i = 0u; i < 4u; ++i) out.push_back(point(sh.vertices[i]));
+
+    return out;
+}
+
 std::vector<sf::Vector2f> translate(const clip::Polygon& in)
 {
     std::vector<sf::Vector2f> out;
@@ -186,12 +195,11 @@ void ShadowWorld::update()
                 //use distance, aabb or trig instead!
                 if (lengthSquared(ad) > r2 && lengthSquared(bd) > r2) continue;
 
-                std::vector<sf::Vector2f> sh;
-                sh.push_back(line.a);
-                sh.push_back(line.b);
-                sh.push_back(p + setLength(bd, rmul));
-                sh.push_back(p + setLength(ad, rmul));
-
+                Shadow sh;
+                sh.vertices[0] = line.a;
+                sh.vertices[1] = line.b;
+                sh.vertices[2] = p + setLength(bd, rmul);
+                sh.vertices[3] = p + setLength(ad, rmul);
                 light->m_shadows.push_back(sh);
             }
 

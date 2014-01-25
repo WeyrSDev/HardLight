@@ -134,14 +134,13 @@ int main()
                 gp.segment(line.a, line.b, sf::Color::Magenta);
             }
 
-            //            for (const std::vector<sf::Vector2f>& v : lit->m_shadows)
-            //            {
-            //                gp.polygon(v.data(), v.size(), sf::Color::Blue);
-            //            }
-
+            for (const ee::Shadow& sh : lit->m_shadows)
+            {
+                gp.polygon(sh.vertices, 4u, sf::Color::Blue);
+            }
         }
 
-        std::printf("total L : %u queried L : %u total L : %u queried L : %u\n", shw.getLightsCount(), shw.getQueriedLightsCount(), shw.getLinesCount(), shw.getQueriedLinesCount());
+        //std::printf("total L : %u queried L : %u total L : %u queried L : %u\n", shw.getLightsCount(), shw.getQueriedLightsCount(), shw.getLinesCount(), shw.getQueriedLinesCount());
 
         app.display();
     }//while app is open

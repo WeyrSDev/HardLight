@@ -14,6 +14,12 @@
 
 namespace ee {
 
+class Shadow
+{
+public:
+    sf::Vector2f vertices[4];
+};
+
 class Light
 {
 
@@ -58,7 +64,7 @@ private:
     bool m_dirty;
     
 public:
-    std::vector<std::vector<sf::Vector2f >> m_shadows;
+    std::vector<Shadow> m_shadows;
 private:
     std::vector<sf::Vector2f> m_cached;
 
