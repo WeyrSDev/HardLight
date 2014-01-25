@@ -24,9 +24,6 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
-#include "ShadowLine.hpp"
-#include "Light.hpp"
-
 
 const int b2_nullNode = -1;
 
@@ -399,7 +396,7 @@ struct b2TreeNode
     /// Enlarged AABB
     b2AABB aabb;
 
-    ee::ShadowLine line;
+    int storedValue;
 
     union
     {
@@ -435,7 +432,7 @@ public:
     ~b2DynamicTree();
 
     /// Create a proxy. Provide a tight fitting AABB and a userData pointer.
-    int CreateProxy(const b2AABB& aabb, ee::ShadowLine line);
+    int CreateProxy(const b2AABB& aabb, int value);
 
     /// Destroy a proxy. This asserts if the id is invalid.
     void DestroyProxy(int proxyId);
@@ -448,7 +445,7 @@ public:
 
     /// Get proxy user data.
     /// @return the proxy user data or 0 if the id is invalid.
-    ee::ShadowLine GetShadowLine(int proxyId) const;
+    int GetStoredValue(int proxyId) const;
 
     /// Get the fat AABB for a proxy.
     const b2AABB& GetFatAABB(int proxyId) const;
@@ -490,11 +487,10 @@ public:
     /// @param newOrigin the new origin with respect to the old origin
     void ShiftOrigin(const b2Vec2& newOrigin);
 
-    int GetShadowLinesCount()const;
-
-    ee::ShadowLine GetNthShadowLine(int index);
 
     void ClearAll();
+
+    void SetPadding(float p);
 
 private:
 
@@ -525,16 +521,14 @@ private:
 
     int m_insertionCount;
 
-    std::vector<int> m_indices;
-
     float m_padding;
 
 };
 
-inline ee::ShadowLine b2DynamicTree::GetShadowLine(int proxyId) const
+inline int b2DynamicTree::GetStoredValue(int proxyId) const
 {
     assert(0 <= proxyId && proxyId < m_nodeCapacity);
-    return m_nodes[proxyId].line;
+    return m_nodes[proxyId].storedValue;
 }
 
 inline const b2AABB& b2DynamicTree::GetFatAABB(int proxyId) const
@@ -543,9 +537,9 @@ inline const b2AABB& b2DynamicTree::GetFatAABB(int proxyId) const
     return m_nodes[proxyId].aabb;
 }
 
-inline int b2DynamicTree::GetShadowLinesCount() const
+inline void b2DynamicTree::SetPadding(float p)
 {
-    return m_indices.size();
+    m_padding = p;
 }
 
 template <typename T>

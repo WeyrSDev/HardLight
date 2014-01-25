@@ -22,10 +22,6 @@
 #include <cassert>
 #include <limits>
 
-
-
-
-
 // From Real-time Collision Detection, p179.
 
 bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
@@ -103,7 +99,6 @@ b2DynamicTree::b2DynamicTree()
     m_nodeCount = 0;
     m_nodes = new b2TreeNode[m_nodeCapacity];
     std::memset(m_nodes, 0, m_nodeCapacity * sizeof (b2TreeNode)); //remove that!
-    m_indices.reserve(m_nodeCapacity);
 
     // Build a linked list for the free list.
     for (int i = 0; i < m_nodeCapacity - 1; ++i)
@@ -142,7 +137,6 @@ int b2DynamicTree::AllocateNode()
         m_nodes = new b2TreeNode[m_nodeCapacity];
         std::copy(oldNodes, oldNodes + m_nodeCount, m_nodes);
         delete [] oldNodes;
-        m_indices.reserve(m_nodeCapacity);
 
         // Build a linked list for the free list. The parent
         // pointer becomes the "next" pointer.
@@ -185,7 +179,7 @@ void b2DynamicTree::FreeNode(int nodeId)
 // of the node instead of a pointer so that we can grow
 // the node pool.
 
-int b2DynamicTree::CreateProxy(const b2AABB& aabb, ee::ShadowLine line)
+int b2DynamicTree::CreateProxy(const b2AABB& aabb, int value)
 {
     int proxyId = AllocateNode();
 
@@ -193,12 +187,10 @@ int b2DynamicTree::CreateProxy(const b2AABB& aabb, ee::ShadowLine line)
     b2Vec2 r(m_padding, m_padding);
     m_nodes[proxyId].aabb.lowerBound = aabb.lowerBound - r;
     m_nodes[proxyId].aabb.upperBound = aabb.upperBound + r;
-    m_nodes[proxyId].line = line;
+    m_nodes[proxyId].storedValue = value;
     m_nodes[proxyId].height = 0;
 
     InsertLeaf(proxyId);
-
-    m_indices.push_back(proxyId);
 
     return proxyId;
 }
@@ -210,10 +202,6 @@ void b2DynamicTree::DestroyProxy(int proxyId)
 
     RemoveLeaf(proxyId);
     FreeNode(proxyId);
-
-    auto it = std::find(m_indices.begin(), m_indices.end(), proxyId);
-    *it = m_indices.back(); //swap
-    m_indices.pop_back(); //and pop
 }
 
 bool b2DynamicTree::MoveProxy(int proxyId, const b2AABB& aabb, const b2Vec2& displacement)
@@ -870,16 +858,8 @@ void b2DynamicTree::ShiftOrigin(const b2Vec2& newOrigin)
     }
 }
 
-ee::ShadowLine b2DynamicTree::GetNthShadowLine(int index)
-{
-    if (index < 0 || index >= m_nodeCount) return ee::ShadowLine();
-    return m_nodes[m_indices[index]].line;
-}
-
 void b2DynamicTree::ClearAll()
 {
-    //same code as ctor, + this delete and clear
-    m_indices.clear();
     delete m_nodes;
 
     m_root = b2_nullNode;
@@ -887,8 +867,7 @@ void b2DynamicTree::ClearAll()
     m_nodeCapacity = 16;
     m_nodeCount = 0;
     m_nodes = new b2TreeNode[m_nodeCapacity];
-    memset(m_nodes, 0, m_nodeCapacity * sizeof (b2TreeNode));
-    m_indices.reserve(m_nodeCapacity);
+    std::memset(m_nodes, 0, m_nodeCapacity * sizeof (b2TreeNode)); //remove that!
 
     // Build a linked list for the free list.
     for (int i = 0; i < m_nodeCapacity - 1; ++i)
@@ -896,7 +875,6 @@ void b2DynamicTree::ClearAll()
         m_nodes[i].next = i + 1;
         m_nodes[i].height = -1;
     }
-
     m_nodes[m_nodeCapacity - 1].next = b2_nullNode;
     m_nodes[m_nodeCapacity - 1].height = -1;
     m_freeList = 0;
@@ -904,4 +882,3 @@ void b2DynamicTree::ClearAll()
     m_path = 0;
     m_insertionCount = 0;
 }
-

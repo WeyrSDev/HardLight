@@ -90,11 +90,6 @@ int main()
                 shw.addLight(sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y), 100.f)->setColor(sf::Color::Cyan);
             }
 
-            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::Z)
-            {
-                shw.removeAllLines();
-            }
-
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::X)
             {
                 shw.m_lights.resize(1u);
@@ -103,11 +98,6 @@ int main()
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::S)
             {
                 lp.reenableFrag(!lp.isFragEnabled());
-            }
-
-            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::R)
-            {
-                shw.rebuildLinesTree();
             }
         }//while pollEvent
 
@@ -132,19 +122,19 @@ int main()
         if (count % frames == 0)
         {
             std::printf("frame %f ", 60.f * clo.getElapsedTime().asSeconds());
-            std::printf("lights:%u lines:%u\n", shw.getLightCount(), shw.getLinesCounts());
+            //std::printf("lights:%u lines:%u\n", shw.getLightCount(), shw.getLinesCounts());
         }
 
         if (adding) gp.segment(a, sf::Vector2f(sf::Mouse::getPosition(app)));
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         {
-            for (int i = 0; i < shw.m_tree.GetShadowLinesCount(); ++i)
-            {
-
-                const ee::ShadowLine line = shw.m_tree.GetNthShadowLine(i);
-                gp.segment(line.a, line.b, sf::Color::Magenta);
-            }
+            //            for (int i = 0; i < shw.m_tree.GetShadowLinesCount(); ++i)
+            //            {
+            //
+            //                const ee::ShadowLine line = shw.m_tree.GetNthShadowLine(i);
+            //                gp.segment(line.a, line.b, sf::Color::Magenta);
+            //            }
 
             for (const std::vector<sf::Vector2f>& v : lit->m_shadows)
             {

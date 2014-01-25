@@ -13,7 +13,6 @@
 #include <memory>
 #include <SFML/System/Vector2.hpp>
 #include "PI.hpp"
-#include "ShadowLine.hpp"
 #include "DebugGeometryPainter.hpp"
 #include "b2DynamicTree.h"
 
@@ -31,7 +30,6 @@ public:
     void addLines(const sf::Vector2f * v, unsigned len);
     void addLinesStrip(const sf::Vector2f * v, unsigned len);
     //remove line
-    void removeAllLines();
 
     void update();
 
@@ -44,10 +42,6 @@ public:
     //    unsigned getLinesCount()const;
     //    Line * getLine(unsinge)
 
-    void rebuildLinesTree();
-    
-    bool QueryCallback(int id);
-    
     Light * m_currentlight;
     
     //private:
