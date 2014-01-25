@@ -25,42 +25,49 @@ class ShadowWorld
 public:
 
     //lights:
-    Light * addLight(sf::Vector2f p, float r);//change this to good init struct with named param idiom?
+    Light * addLight(sf::Vector2f p, float r); //change this to good init struct with named param idiom?
     void removeLight(Light * ptr); //add ref overload too?
-    unsigned getLightCount()const;
+    void removeAllLights();
+    unsigned getLightsCount()const;
     Light * getLight(unsigned i)const;
-    
+    unsigned getQueriedLightsCount()const;
+    Light * getQueriedLight(unsigned i)const;
+
+
     //lines:
     void addLine(sf::Vector2f a, sf::Vector2f b);
     void addLines(const sf::Vector2f * v, unsigned len);
     void addLinesStrip(const sf::Vector2f * v, unsigned len);
-    //remove line
+    //void removeLine(int lineid);
+    void removeAllLines();
+    unsigned getLinesCount()const;
+    const ShadowLine& getLineById(int id)const;
+    unsigned getQueriedLinesCount()const;
+    const ShadowLine& getQueriedLine(unsigned i)const;
+
 
     //handling:
     void update();
-
-    
-    
-    
-
-    
-    //private:
-    
-    //bool queryLight(int id);
-    bool queryLine(int id);
-    
-    std::vector<ShadowLine> m_queriedlines;
+    void setViewRect(sf::FloatRect rect);
+    sf::FloatRect getViewRect()const;
 
 
 
-    std::vector<std::unique_ptr<Light> > m_lights;
-    //array for indices here, sorted maybe?
-    b2DynamicTree m_lighttree;
+
+private:
+
+    void queryLights(const b2AABB& ab);
+    bool queryLineCallback(int id);
 
     ShadowLinesBuffer m_linebuff;
     b2DynamicTree m_linetree;
-    
-    
+    std::vector<ShadowLine> m_queriedlines;
+
+    std::vector<std::unique_ptr<Light> > m_lights;
+    std::vector<Light*> m_queriedlights;
+
+    b2AABB m_viewrect;
+
 };
 
 }

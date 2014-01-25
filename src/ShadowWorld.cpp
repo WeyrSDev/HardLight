@@ -59,10 +59,6 @@ clip::Polygon circl(sf::Vector2f v, float r, float angle, float spread)
     return translate(mid);
 }
 
-}
-
-namespace {
-
 sf::Vector2f setLength(sf::Vector2f v, float l)
 {
     const float len = std::sqrt(v.x * v.x + v.y * v.y);
@@ -71,20 +67,26 @@ sf::Vector2f setLength(sf::Vector2f v, float l)
     return l / len * v;
 }
 
+float lengthSquared(sf::Vector2f v)
+{
+    return v.x * v.x + v.y * v.y;
+}
+
 }
 
 Light * ShadowWorld::addLight(sf::Vector2f p, float r)
 {
     m_lights.emplace_back(new Light);
-    Light * l = m_lights.back().get();
+    Light * light = m_lights.back().get();
 
-    l->m_pos = p;
-    l->m_radius = r;
-    l->m_spread = pi2;
-    l->m_angle = 0.f;
-    l->m_color = sf::Color::White;
+    light->m_pos = p;
+    light->m_radius = r;
+    light->m_spread = pi2;
+    light->m_angle = 0.f;
+    light->m_color = sf::Color::White;
+    light->markDirty();
 
-    return l;
+    return light;
 }
 
 void ShadowWorld::removeLight(Light * ptr)
@@ -97,6 +99,11 @@ void ShadowWorld::removeLight(Light * ptr)
             return;
         }
     }
+}
+
+void ShadowWorld::removeAllLights()
+{
+    m_lights.clear();
 }
 
 void ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
@@ -112,18 +119,20 @@ void ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
     const int lineid = m_linebuff.addLine(a, b, treeid);
     m_linetree.SetStoredValue(treeid, lineid);
 
+    //this is silly but ok for now
+    for (const std::unique_ptr<Light>& light : m_lights)
+    {
+        light->markDirty();
+    }
+
+    //DIRTY SOME LIGHTS SOMEHOW
+
+#warning "makde this and others be functions that call putLineIntoBuffer and diryt right light, dont make 'addline*' call each other"
+
     //return lineid;
 }
 
 void ShadowWorld::addLines(const sf::Vector2f* v, unsigned len)
-{
-    for (unsigned i = 0u; i < (len - 1u); ++i)
-    {
-        addLine(v[i], v[i + 1u]);
-    }
-}
-
-void ShadowWorld::addLinesStrip(const sf::Vector2f* v, unsigned len)
 {
     const unsigned count = len / 2u;
 
@@ -133,46 +142,59 @@ void ShadowWorld::addLinesStrip(const sf::Vector2f* v, unsigned len)
     }
 }
 
+void ShadowWorld::addLinesStrip(const sf::Vector2f* v, unsigned len)
+{
+    for (unsigned i = 0u; i < (len - 1u); ++i)
+    {
+        addLine(v[i], v[i + 1u]);
+    }
+}
+
 void ShadowWorld::update()
 {
+    //this function needs to be split up into smaller ones!
 
-    //query BOTH trees here
+
+    //query BOTH trees here, light too!
 
     m_queriedlines.clear();
+    m_linetree.Query(this, &ShadowWorld::queryLineCallback, m_viewrect);
 
-    b2AABB ab;
-    ab.lowerBound.Set(0.f, 0.f);
-    ab.upperBound.Set(640.f, 480.f);
+    queryLights(m_viewrect);
 
-    m_linetree.Query(this, &ShadowWorld::queryLine, ab);
-
-
-
-    for (const std::unique_ptr<Light>& light : m_lights)
+    for (Light * light : m_queriedlights)//iter over selected lights
     {
-        light->m_shadows.clear();
-        light->m_cached.clear();
-
         const sf::Vector2f p = light->getPosition();
         const float rmul = 100.f * light->getRadius();
+        const float r2 = light->getRadius() * light->getRadius(); //decrease this a bit?
 
-        for (const ShadowLine& line : m_queriedlines)
+        if (light->m_dirty)
         {
-            const sf::Vector2f ad(setLength(line.a - p, rmul));
-            const sf::Vector2f bd(setLength(line.b - p, rmul));
+            light->m_cached.clear();
 
-            std::vector<sf::Vector2f> sh;
-            sh.push_back(line.a);
-            sh.push_back(line.b);
-            sh.push_back(p + bd);
-            sh.push_back(p + ad);
+            static int yy = 0;
+            std::printf("doing a calc %d\n", ++yy); //debug print
 
-            light->m_shadows.push_back(sh);
-        }
+            light->m_shadows.clear();
 
+            for (const ShadowLine& line : m_queriedlines)
+            {
+                const sf::Vector2f ad(line.a - p);
+                const sf::Vector2f bd(line.b - p);
 
-        if (light->m_cached.empty())
-        {
+#warning "THIS IS WRONG FOR LONG LINES"
+                //use distance, aabb or trig instead!
+                if (lengthSquared(ad) > r2 && lengthSquared(bd) > r2) continue;
+
+                std::vector<sf::Vector2f> sh;
+                sh.push_back(line.a);
+                sh.push_back(line.b);
+                sh.push_back(p + setLength(bd, rmul));
+                sh.push_back(p + setLength(ad, rmul));
+
+                light->m_shadows.push_back(sh);
+            }
+
             clip::Clipper clip;
 
             clip::Polygons out(1u);
@@ -193,27 +215,105 @@ void ShadowWorld::update()
             clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
 
             if (out.size() > 0u) light->m_cached = translate(out[0]);
-        }//if m cached empty
+
+            light->m_dirty = false;
+        }//if dirty light
 
 
     }//for light
 }
 
-unsigned ShadowWorld::getLightCount() const
+unsigned ShadowWorld::getLightsCount() const
 {
     return m_lights.size();
 }
 
 Light * ShadowWorld::getLight(unsigned i) const
 {
-    return i < m_lights.size()?m_lights[i].get():nullptr;
+    assert(i < m_lights.size());
+    return m_lights[i].get();
 }
 
-bool ShadowWorld::queryLine(int id)
+unsigned ShadowWorld::getQueriedLightsCount() const
+{
+    return m_queriedlights.size();
+}
+
+Light * ShadowWorld::getQueriedLight(unsigned i) const
+{
+    assert(i < m_queriedlights.size());
+    return m_queriedlights[i];
+}
+
+void ShadowWorld::removeAllLines()
+{
+    m_linetree.ClearAll();
+    m_linebuff.removeAll();
+
+    //its easier to dirty all lights than query which actually needed that
+    for (const std::unique_ptr<Light>& light : m_lights)
+    {
+        light->markDirty();
+    }
+}
+
+unsigned ShadowWorld::getLinesCount() const
+{
+    return m_linebuff.getCount();
+}
+
+const ShadowLine& ShadowWorld::getLineById(int id) const
+{
+    return m_linebuff.getLine(id);
+}
+
+unsigned ShadowWorld::getQueriedLinesCount() const
+{
+    return m_queriedlines.size();
+}
+
+const ShadowLine& ShadowWorld::getQueriedLine(unsigned i) const
+{
+    assert(i < m_queriedlines.size());
+    return m_queriedlines[i];
+}
+
+void ShadowWorld::setViewRect(sf::FloatRect rect)
+{
+    m_viewrect.lowerBound.Set(rect.left, rect.top);
+    m_viewrect.upperBound.Set(rect.left + rect.width, rect.top + rect.height);
+}
+
+sf::FloatRect ShadowWorld::getViewRect() const
+{
+    const auto l = m_viewrect.lowerBound;
+    const auto u = m_viewrect.upperBound;
+    return sf::FloatRect(l.x, l.y, u.x - l.x, u.y - l.y);
+}
+
+bool ShadowWorld::queryLineCallback(int id)
 {
     m_queriedlines.push_back(m_linebuff.getLine(m_linetree.GetStoredValue(id)));
     return true;
 }
 
+void ShadowWorld::queryLights(const b2AABB& ab)
+{
+    m_queriedlights.clear();
+
+    for (const std::unique_ptr<Light>& light : m_lights)
+    {
+        const auto p = light->getPosition();
+        const float r = light->getRadius();
+        b2AABB lab;
+        lab.lowerBound.Set(p.x - r, p.y - r);
+        lab.lowerBound.Set(p.x + r, p.y + r);
+
+        if (ab.Contains(lab))
+        {
+            m_queriedlights.push_back(light.get());
+        }
+    }
+}
 
 }

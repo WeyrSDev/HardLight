@@ -58,8 +58,12 @@ void Light::setSpread(float s)
 
 void Light::markDirty()
 {
-    m_cached.clear();
+    m_dirty=true;
 }
 
+const std::vector<sf::Vector2f>& Light::getBakedLight() const
+{
+    return m_cached;
+}
 
 }

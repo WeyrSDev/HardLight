@@ -43,10 +43,10 @@ void LightPainter::render(ShadowWorld& w)
 {
     m_sumtex.clear();
 
-    for (int i = 0; i < w.getLightCount(); ++i)
+    for (int i = 0; i < w.getLightsCount(); ++i)
     {
         Light * l = w.getLight(i);
-        const auto& poly = l->m_cached;
+        const auto& poly = l->getBakedLight();
         sf::Shader * frag = m_fragenabled?&m_frag:nullptr;
         drawBlendedLight(m_sumtex, frag, l->getPosition(), l->getRadius(), poly.data(), poly.size(), l->getColor());
     }//for light

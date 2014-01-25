@@ -35,6 +35,7 @@ int main()
     ee::DebugGeometryPainter gp(app);
 
     ee::ShadowWorld shw;
+    shw.setViewRect(sf::FloatRect(0.f, 0.f, 640.f, 480.f));
     ee::LightPainter lp;
     lp.setSize(640u, 480u);
     //lp.enableFragFromFile("light.frag");
@@ -49,8 +50,11 @@ int main()
     std::vector<sf::Vector2f> pl;
     makeHex(pl, sf::Vector2f(300.f, 300.f));
 
-    shw.addLines(pl.data(), pl.size());
+    shw.addLinesStrip(pl.data(), pl.size());
     shw.addLine(pl[0], pl[pl.size() - 1u]);
+
+
+    std::vector<ee::Light*> lights;
 
 
     sf::Vector2f a;
@@ -63,10 +67,7 @@ int main()
     {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::F)) angle += ee::pi2 / 120.f;
 
-        lit->setAngle(angle);
-
-        ++count;
-        sf::Clock clo;
+        lit->setAngleClean(angle);
 
         sf::Event eve;
         while (app.pollEvent(eve))
@@ -87,61 +88,60 @@ int main()
 
             if (eve.type == sf::Event::MouseButtonPressed && eve.mouseButton.button == sf::Mouse::Right)
             {
-                shw.addLight(sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y), 100.f)->setColor(sf::Color::Cyan);
-            }
-
-            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::X)
-            {
-                shw.m_lights.resize(1u);
+                auto l = shw.addLight(sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y), 100.f);
+                l->setColor(sf::Color::Cyan);
+                lights.push_back(l);
             }
 
             if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::S)
             {
                 lp.reenableFrag(!lp.isFragEnabled());
             }
+
+            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::Z)
+            {
+                shw.removeAllLines();
+            }
+
+            if (eve.type == sf::Event::KeyPressed && eve.key.code == sf::Keyboard::D)
+            {
+                if (!lights.empty())
+                {
+                    shw.removeLight(lights.front());
+                    lights.erase(lights.begin());
+                }
+            }
+
         }//while pollEvent
 
-        if (true || sf::Mouse::isButtonPressed(sf::Mouse::Left))
-        {
-            lit->setPosition(sf::Vector2f(sf::Mouse::getPosition(app)));
-        }
+        lit->setPositionClean(sf::Vector2f(sf::Mouse::getPosition(app)));
 
         app.clear();
 
         shw.update();
-
-        sf::Clock clo2;
         lp.render(shw);
-        if (count % frames == 0) std::printf("shadow %f ", 60.f * clo2.getElapsedTime().asSeconds());
 
         app.draw(payday);
         app.draw(sf::Sprite(lp.getCanvas()), sf::BlendMultiply);
-
-        const sf::Vector2f mousepos(sf::Mouse::getPosition(app));
-
-        if (count % frames == 0)
-        {
-            std::printf("frame %f ", 60.f * clo.getElapsedTime().asSeconds());
-            //std::printf("lights:%u lines:%u\n", shw.getLightCount(), shw.getLinesCounts());
-        }
 
         if (adding) gp.segment(a, sf::Vector2f(sf::Mouse::getPosition(app)));
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
         {
-            //            for (int i = 0; i < shw.m_tree.GetShadowLinesCount(); ++i)
-            //            {
-            //
-            //                const ee::ShadowLine line = shw.m_tree.GetNthShadowLine(i);
-            //                gp.segment(line.a, line.b, sf::Color::Magenta);
-            //            }
-
-            for (const std::vector<sf::Vector2f>& v : lit->m_shadows)
+            for (unsigned i = 0u; i < shw.getQueriedLinesCount(); ++i)
             {
-                gp.polygon(v.data(), v.size(), sf::Color::Blue);
+                const ee::ShadowLine line = shw.getQueriedLine(i);
+                gp.segment(line.a, line.b, sf::Color::Magenta);
             }
 
+            //            for (const std::vector<sf::Vector2f>& v : lit->m_shadows)
+            //            {
+            //                gp.polygon(v.data(), v.size(), sf::Color::Blue);
+            //            }
+
         }
+
+        std::printf("total L : %u queried L : %u total L : %u queried L : %u\n", shw.getLightsCount(), shw.getQueriedLightsCount(), shw.getLinesCount(), shw.getQueriedLinesCount());
 
         app.display();
     }//while app is open

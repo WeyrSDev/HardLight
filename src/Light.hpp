@@ -44,6 +44,9 @@ public:
     void setAngleClean(float a);
     void setSpreadClean(float s);
 
+    const std::vector<sf::Vector2f>& getBakedLight()const;
+
+
 private:
 
     sf::Vector2f m_pos;
@@ -52,10 +55,11 @@ private:
     float m_angle;
     float m_spread;
 
-public://delme
-
+    bool m_dirty;
+    
+public:
     std::vector<std::vector<sf::Vector2f >> m_shadows;
-
+private:
     std::vector<sf::Vector2f> m_cached;
 
 };
