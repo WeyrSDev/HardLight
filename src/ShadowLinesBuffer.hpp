@@ -29,27 +29,36 @@ class ShadowLinesBuffer
 
 public:
     ShadowLinesBuffer();
-    
+
     //returns lineid
     int addLine(sf::Vector2f a, sf::Vector2f b, int treeid);
 
     //returns treeid that this line had
     int removeLine(int lineid);
-    
+
     //remove all lines
     void removeAll();
 
     //get line by lineid to inspect a,b and treeid
     const ShadowLine& getLine(int lineid) const;
 
+    int getCount()const;
+
 private:
     int getNewLineId();
-    
+
     int m_firstfree;
+
+    int m_count;
 
     std::vector<ShadowLine> m_lines;
 
 };
+
+inline int ShadowLinesBuffer::getCount() const
+{
+    return m_count;
+}
 
 }
 

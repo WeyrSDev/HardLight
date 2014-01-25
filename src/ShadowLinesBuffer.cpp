@@ -12,7 +12,8 @@ int ShadowLine::getTreeId() const
 }
 
 ShadowLinesBuffer::ShadowLinesBuffer() :
-m_firstfree(InvalidFreeIndex)
+m_firstfree(InvalidFreeIndex),
+m_count(0)
 {
 
 }
@@ -25,6 +26,8 @@ int ShadowLinesBuffer::addLine(sf::Vector2f a, sf::Vector2f b, int treeid)
     m_lines[line].b = b;
     m_lines[line].m_id = -treeid - 2;
 
+    ++m_count;
+
     return line;
 }
 
@@ -36,6 +39,8 @@ int ShadowLinesBuffer::removeLine(int lineid)
     m_lines[lineid].m_id = m_firstfree;
     m_firstfree = lineid;
 
+    --m_count;
+
     return treeid;
 }
 
@@ -43,7 +48,7 @@ void ShadowLinesBuffer::removeAll()
 {
     m_firstfree = 0;
 
-    for (int i = 0; i < m_lines.size()-1; ++i)
+    for (int i = 0; i < m_lines.size() - 1; ++i)
     {
         m_lines[i].m_id = i + 1;
     }
@@ -73,7 +78,7 @@ int ShadowLinesBuffer::getNewLineId()
 
         m_lines[m_firstfree].m_id = ret + 1;
 
-        for (int i = ret + 1; i < m_lines.size() -1 ; ++i)
+        for (int i = ret + 1; i < m_lines.size() - 1; ++i)
         {
             m_lines[i].m_id = i + 1;
         }
