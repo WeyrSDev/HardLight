@@ -16,6 +16,7 @@ namespace ee {
 
 class Light
 {
+
     friend class ShadowWorld;
 public:
 
@@ -34,6 +35,15 @@ public:
     float getSpread()const;
     void setSpread(float s);
 
+    void markDirty();
+
+    //helpers to not dirty without need(normal setters always do) these compare
+    //first, set later, no color setter - setting color doesnt dirty the light
+    void setPositionClean(sf::Vector2f p);
+    void setRadiusClean(float r);
+    void setAngleClean(float a);
+    void setSpreadClean(float s);
+
 private:
 
     sf::Vector2f m_pos;
@@ -43,12 +53,37 @@ private:
     float m_spread;
 
 public://delme
-    
+
     std::vector<std::vector<sf::Vector2f >> m_shadows;
-    
+
     std::vector<sf::Vector2f> m_cached;
 
 };
+
+inline void Light::setPositionClean(sf::Vector2f p)
+{
+    if (m_pos == p) return;
+    setPosition(p);
+}
+
+inline void Light::setRadiusClean(float r)
+{
+    if (m_radius == r) return;
+    setRadius(r);
+}
+
+inline void Light::setAngleClean(float a)
+{
+    if (m_angle == a) return;
+    setAngle(a);
+}
+
+inline void Light::setSpreadClean(float s)
+{
+    if (m_spread == s) return;
+    setSpread(s);
+}
+
 
 }
 

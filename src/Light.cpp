@@ -10,6 +10,7 @@ sf::Vector2f Light::getPosition() const
 void Light::setPosition(sf::Vector2f p)
 {
     m_pos = p;
+    markDirty();
 }
 
 float Light::getRadius() const
@@ -20,6 +21,7 @@ float Light::getRadius() const
 void Light::setRadius(float r)
 {
     m_radius = r;
+    markDirty();
 }
 
 sf::Color Light::getColor() const
@@ -40,6 +42,7 @@ float Light::getAngle() const
 void Light::setAngle(float a)
 {
     m_angle = a;
+    markDirty();
 }
 
 float Light::getSpread() const
@@ -50,6 +53,13 @@ float Light::getSpread() const
 void Light::setSpread(float s)
 {
     m_spread = s;
+    markDirty();
 }
+
+void Light::markDirty()
+{
+    m_cached.clear();
+}
+
 
 }
