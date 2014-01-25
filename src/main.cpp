@@ -42,7 +42,7 @@ int main()
 
     ee::Light * lit = shw.addLight({0.f, 0.f}, 100.f);
     //lit->setColor(sf::Color::Red);
-    lit->setSpread(ee::halfpi);
+    //lit->setSpread(ee::halfpi);
     //lit->setAngle(ee::halfpi);
 
     float angle = 0.f;
@@ -116,12 +116,12 @@ int main()
 
         lit->setPositionClean(sf::Vector2f(sf::Mouse::getPosition(app)));
 
-        app.clear();
+        app.clear(sf::Color::White);
 
         shw.update();
         lp.render(shw);
 
-        app.draw(payday);
+        //app.draw(payday);
         app.draw(sf::Sprite(lp.getCanvas()), sf::BlendMultiply);
 
         if (adding) gp.segment(a, sf::Vector2f(sf::Mouse::getPosition(app)));

@@ -62,6 +62,7 @@ private:
     float m_spread;
 
     bool m_dirty;
+    bool m_in;
     
 public:
     std::vector<Shadow> m_shadows;

@@ -1,6 +1,7 @@
 #include "ShadowWorld.hpp"
 #include <cmath>
 #include <polyclipping/clipper.hpp>
+#include <SFML/Window/Keyboard.hpp>
 
 namespace ee {
 
@@ -83,9 +84,23 @@ float lengthSquared(sf::Vector2f v)
 
 b2AABB getAABB(sf::Vector2f a, sf::Vector2f b)
 {
+    if (a.x == b.x) b.x += 1.f;
+    if (a.y == b.y) b.y += 1.f;
+
     b2AABB ab;
     ab.lowerBound.Set(std::min(a.x, b.x), std::min(a.y, b.y));
     ab.upperBound.Set(std::max(a.x, b.x), std::max(a.y, b.y));
+    return ab;
+}
+
+b2AABB getAABB(Light * light)
+{
+    const auto p = light->getPosition();
+    const float r = light->getRadius();
+
+    b2AABB ab;
+    ab.lowerBound.Set(p.x - r, p.y - r);
+    ab.upperBound.Set(p.x + r, p.y + r);
     return ab;
 }
 
@@ -95,6 +110,18 @@ b2AABB get0AABB()
     ab.lowerBound.SetZero();
     ab.upperBound.SetZero();
     return ab;
+}
+
+sf::FloatRect toSF(const b2AABB& b)
+{
+    const auto l = b.lowerBound;
+    const auto u = b.upperBound;
+    return sf::FloatRect(l.x, l.y, u.x - l.x, u.y - l.y);
+}
+
+bool intersects(const b2AABB& a, const b2AABB& b)
+{
+    return toSF(a).intersects(toSF(b));
 }
 
 }
@@ -110,6 +137,7 @@ Light * ShadowWorld::addLight(sf::Vector2f p, float r)
     light->m_angle = 0.f;
     light->m_color = sf::Color::White;
     light->markDirty();
+    light->m_in = intersects(getAABB(light), m_viewrect);
 
     return light;
 }
@@ -188,11 +216,6 @@ void ShadowWorld::dirtyLights(const b2AABB& ab)
 
 void ShadowWorld::update()
 {
-    //this function needs to be split up into smaller ones!
-
-
-    //query BOTH trees here, light too!
-
     m_queriedlines.clear();
     m_linetree.Query(this, &ShadowWorld::queryLineCallback, m_viewrect);
 
@@ -202,7 +225,6 @@ void ShadowWorld::update()
     {
         const sf::Vector2f p = light->getPosition();
         const float rmul = 100.f * light->getRadius();
-        const float r2 = light->getRadius() * light->getRadius(); //decrease this a bit?
 
         if (light->m_dirty)
         {
@@ -218,9 +240,10 @@ void ShadowWorld::update()
                 const sf::Vector2f ad(line.a - p);
                 const sf::Vector2f bd(line.b - p);
 
-#warning "THIS IS WRONG FOR LONG LINES"
-                //use distance, aabb or trig instead!
-                if (lengthSquared(ad) > r2 && lengthSquared(bd) > r2) continue;
+                if (!intersects(getAABB(light), m_linetree.GetFatAABB(line.getTreeId())))
+                {
+                    continue;
+                }
 
                 Shadow sh;
                 sh.vertices[0] = line.a;
@@ -315,6 +338,7 @@ const ShadowLine& ShadowWorld::getQueriedLine(unsigned i) const
 
 void ShadowWorld::setViewRect(sf::FloatRect rect)
 {
+#warning "is taht ok to do without dirtying or inning lights? prolly yes cus inning is for teleports and cam teleport is covered?"
     m_viewrect.lowerBound.Set(rect.left, rect.top);
     m_viewrect.upperBound.Set(rect.left + rect.width, rect.top + rect.height);
 }
@@ -334,6 +358,8 @@ bool ShadowWorld::queryLineCallback(int id)
 
 void ShadowWorld::queryLights(const b2AABB& ab)
 {
+#warning "light that were in frame but now teleported out(moved out fast) need update too!"
+
     m_queriedlights.clear();
 
     for (const std::unique_ptr<Light>& light : m_lights)
@@ -342,9 +368,12 @@ void ShadowWorld::queryLights(const b2AABB& ab)
         const float r = light->getRadius();
         b2AABB lab;
         lab.lowerBound.Set(p.x - r, p.y - r);
-        lab.lowerBound.Set(p.x + r, p.y + r);
+        lab.upperBound.Set(p.x + r, p.y + r);
 
-        if (ab.Contains(lab))
+        const bool lastin = light->m_in;
+        light->m_in = intersects(ab, lab);
+
+        if (lastin || light->m_in)
         {
             m_queriedlights.push_back(light.get());
         }
