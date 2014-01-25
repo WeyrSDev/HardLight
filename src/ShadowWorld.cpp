@@ -138,6 +138,7 @@ Light * ShadowWorld::addLight(sf::Vector2f p, float r)
     light->m_color = sf::Color::White;
     light->markDirty();
     light->m_in = intersects(getAABB(light), m_viewrect);
+    light->m_owner = this;
 
     return light;
 }

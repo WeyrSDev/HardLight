@@ -1,4 +1,5 @@
 #include "Light.hpp"
+#include "ShadowWorld.hpp"
 #include <cassert>
 
 namespace ee {
@@ -77,5 +78,11 @@ const Shadow& Light::getShadow(unsigned i) const
     assert(i < m_shadows.size());
     return m_shadows[i];
 }
+
+void Light::remove()
+{
+    m_owner->removeLight(this);
+}
+
 
 }

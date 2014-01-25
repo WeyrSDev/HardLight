@@ -14,6 +14,8 @@
 
 namespace ee {
 
+class ShadowWorld;
+
 class Shadow
 {
 public:
@@ -55,6 +57,8 @@ public:
     unsigned getShadowsCount()const;
     const Shadow& getShadow(unsigned i)const;
     
+    void remove();
+    
 private:
 
     sf::Vector2f m_pos;
@@ -66,8 +70,9 @@ private:
     bool m_dirty;
     bool m_in;
     
+    ShadowWorld * m_owner;
+    
     std::vector<Shadow> m_shadows;
-private:
     std::vector<sf::Vector2f> m_cached;
 
 };
