@@ -108,9 +108,11 @@ void ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
     ab.upperBound.x = std::max(a.x, b.x);
     ab.upperBound.y = std::max(a.y, b.y);
 
+    const int treeid = m_linetree.CreateProxy(ab, 0);
+    const int lineid = m_linebuff.addLine(a, b, treeid);
+    m_linetree.SetStoredValue(treeid, lineid);
 
-
-    //m_tree.CreateProxy(ab, line);
+    //return lineid;
 }
 
 void ShadowWorld::addLines(const sf::Vector2f* v, unsigned len)
@@ -133,23 +135,41 @@ void ShadowWorld::addLinesStrip(const sf::Vector2f* v, unsigned len)
 
 void ShadowWorld::update()
 {
+
+    //query BOTH trees here
+
+    m_queriedlines.clear();
+
+    b2AABB ab;
+    ab.lowerBound.Set(0.f, 0.f);
+    ab.upperBound.Set(640.f, 480.f);
+
+    m_linetree.Query(this, &ShadowWorld::queryLine, ab);
+
+
+
     for (const std::unique_ptr<Light>& light : m_lights)
     {
         light->m_shadows.clear();
         light->m_cached.clear();
 
-        m_currentlight = light.get();
-
         const sf::Vector2f p = light->getPosition();
         const float rmul = 100.f * light->getRadius();
 
-        b2AABB ab;
-        ab.lowerBound.x = p.x - light->getRadius();
-        ab.lowerBound.y = p.y - light->getRadius();
-        ab.upperBound.x = p.x + light->getRadius();
-        ab.upperBound.y = p.y + light->getRadius();
+        for (const ShadowLine& line : m_queriedlines)
+        {
+            const sf::Vector2f ad(setLength(line.a - p, rmul));
+            const sf::Vector2f bd(setLength(line.b - p, rmul));
 
-        //m_tree.Query(this, ab); //query the line tree and build shadows
+            std::vector<sf::Vector2f> sh;
+            sh.push_back(line.a);
+            sh.push_back(line.b);
+            sh.push_back(p + bd);
+            sh.push_back(p + ad);
+
+            light->m_shadows.push_back(sh);
+        }
+
 
         if (light->m_cached.empty())
         {
@@ -170,14 +190,11 @@ void ShadowWorld::update()
                 clip.AddPolygon(pl, clip::ptClip);
             }//for poly
 
-            //do not clip if there are no shadows
-            if (light->m_shadows.size() > 0u)
-            {
-                clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
-            }
+            clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
 
             if (out.size() > 0u) light->m_cached = translate(out[0]);
-        }
+        }//if m cached empty
+
 
     }//for light
 }
@@ -191,5 +208,12 @@ Light * ShadowWorld::getLight(unsigned i) const
 {
     return i < m_lights.size()?m_lights[i].get():nullptr;
 }
+
+bool ShadowWorld::queryLine(int id)
+{
+    m_queriedlines.push_back(m_linebuff.getLine(m_linetree.GetStoredValue(id)));
+    return true;
+}
+
 
 }

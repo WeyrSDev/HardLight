@@ -15,6 +15,7 @@
 #include "PI.hpp"
 #include "DebugGeometryPainter.hpp"
 #include "b2DynamicTree.h"
+#include "ShadowLinesBuffer.hpp"
 
 namespace ee {
 
@@ -23,39 +24,43 @@ class ShadowWorld
 
 public:
 
-    Light * addLight(sf::Vector2f p, float r);
+    //lights:
+    Light * addLight(sf::Vector2f p, float r);//change this to good init struct with named param idiom?
     void removeLight(Light * ptr); //add ref overload too?
-
+    unsigned getLightCount()const;
+    Light * getLight(unsigned i)const;
+    
+    //lines:
     void addLine(sf::Vector2f a, sf::Vector2f b);
     void addLines(const sf::Vector2f * v, unsigned len);
     void addLinesStrip(const sf::Vector2f * v, unsigned len);
     //remove line
 
+    //handling:
     void update();
 
-    unsigned getLightCount()const;
-    Light * getLight(unsigned i)const;
     
-    unsigned getLinesCounts()const;
+    
     
 
-    //    unsigned getLinesCount()const;
-    //    Line * getLine(unsinge)
-
-    Light * m_currentlight;
     
     //private:
+    
+    //bool queryLight(int id);
+    bool queryLine(int id);
+    
+    std::vector<ShadowLine> m_queriedlines;
 
 
-    b2DynamicTree m_tree;
-
-    //lines are now stores directly in the tree
-    //std::vector<std::unique_ptr<ShadowLine> > m_lines;
 
     std::vector<std::unique_ptr<Light> > m_lights;
+    //array for indices here, sorted maybe?
+    b2DynamicTree m_lighttree;
 
-
-
+    ShadowLinesBuffer m_linebuff;
+    b2DynamicTree m_linetree;
+    
+    
 };
 
 }

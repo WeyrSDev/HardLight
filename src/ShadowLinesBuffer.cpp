@@ -76,7 +76,7 @@ int ShadowLinesBuffer::getNewLineId()
 
         //no need to check if ret+1<=size(), we always add at least 2 new lines
 
-        m_lines[m_firstfree].m_id = ret + 1;
+        m_firstfree = ret + 1;
 
         for (int i = ret + 1; i < m_lines.size() - 1; ++i)
         {

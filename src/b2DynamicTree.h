@@ -27,6 +27,8 @@
 
 const int b2_nullNode = -1;
 
+//REWRITE THESE AS GLOBAL FUNS ON SFVEC2F
+
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
 
 inline bool b2IsValid(float x)
@@ -447,13 +449,15 @@ public:
     /// @return the proxy user data or 0 if the id is invalid.
     int GetStoredValue(int proxyId) const;
 
+    void SetStoredValue(int proxyId, int value);
+
     /// Get the fat AABB for a proxy.
     const b2AABB& GetFatAABB(int proxyId) const;
 
     /// Query an AABB for overlapping proxies. The callback class
     /// is called for each proxy that overlaps the supplied AABB.
     template <typename T>
-    void Query(T* callback, const b2AABB& aabb) const;
+    void Query(T * callback, bool(T::*call)(int), const b2AABB& aabb) const;
 
     /// Ray-cast against the proxies in the tree. This relies on the callback
     /// to perform a exact ray-cast in the case were the proxy contains a shape.
@@ -531,6 +535,12 @@ inline int b2DynamicTree::GetStoredValue(int proxyId) const
     return m_nodes[proxyId].storedValue;
 }
 
+inline void b2DynamicTree::SetStoredValue(int proxyId, int value)
+{
+    assert(0 <= proxyId && proxyId < m_nodeCapacity);
+    m_nodes[proxyId].storedValue = value;
+}
+
 inline const b2AABB& b2DynamicTree::GetFatAABB(int proxyId) const
 {
     assert(0 <= proxyId && proxyId < m_nodeCapacity);
@@ -543,7 +553,7 @@ inline void b2DynamicTree::SetPadding(float p)
 }
 
 template <typename T>
-inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
+inline void b2DynamicTree::Query(T * callback, bool(T::*call)(int), const b2AABB& aabb) const
 {
     b2GrowableStack<int, 256> stack;
     stack.Push(m_root);
@@ -562,8 +572,8 @@ inline void b2DynamicTree::Query(T* callback, const b2AABB& aabb) const
         {
             if (node->IsLeaf())
             {
-                bool proceed = callback->QueryCallback(nodeId);
-                if (proceed == false)
+                bool proceed = (callback->*call)(nodeId);
+                if (!proceed)
                 {
                     return;
                 }
