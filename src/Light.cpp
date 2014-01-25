@@ -1,4 +1,5 @@
 #include "Light.hpp"
+#include <cassert>
 
 namespace ee {
 
@@ -58,12 +59,23 @@ void Light::setSpread(float s)
 
 void Light::markDirty()
 {
-    m_dirty=true;
+    m_dirty = true;
 }
 
 const std::vector<sf::Vector2f>& Light::getBakedLight() const
 {
     return m_cached;
+}
+
+unsigned Light::getShadowsCount() const
+{
+    return m_shadows.size();
+}
+
+const Shadow& Light::getShadow(unsigned i) const
+{
+    assert(i < m_shadows.size());
+    return m_shadows[i];
 }
 
 }

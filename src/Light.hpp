@@ -52,7 +52,9 @@ public:
 
     const std::vector<sf::Vector2f>& getBakedLight()const;
 
-
+    unsigned getShadowsCount()const;
+    const Shadow& getShadow(unsigned i)const;
+    
 private:
 
     sf::Vector2f m_pos;
@@ -64,7 +66,6 @@ private:
     bool m_dirty;
     bool m_in;
     
-public:
     std::vector<Shadow> m_shadows;
 private:
     std::vector<sf::Vector2f> m_cached;
