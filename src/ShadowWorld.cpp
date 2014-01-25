@@ -81,6 +81,22 @@ float lengthSquared(sf::Vector2f v)
     return v.x * v.x + v.y * v.y;
 }
 
+b2AABB getAABB(sf::Vector2f a, sf::Vector2f b)
+{
+    b2AABB ab;
+    ab.lowerBound.Set(std::min(a.x, b.x), std::min(a.y, b.y));
+    ab.upperBound.Set(std::max(a.x, b.x), std::max(a.y, b.y));
+    return ab;
+}
+
+b2AABB get0AABB()
+{
+    b2AABB ab;
+    ab.lowerBound.SetZero();
+    ab.upperBound.SetZero();
+    return ab;
+}
+
 }
 
 Light * ShadowWorld::addLight(sf::Vector2f p, float r)
@@ -115,48 +131,59 @@ void ShadowWorld::removeAllLights()
     m_lights.clear();
 }
 
-void ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
+int ShadowWorld::putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const b2AABB& ab)
 {
-    b2AABB ab;
-    ab.lowerBound.x = std::min(a.x, b.x);
-    ab.lowerBound.y = std::min(a.y, b.y);
-
-    ab.upperBound.x = std::max(a.x, b.x);
-    ab.upperBound.y = std::max(a.y, b.y);
-
     const int treeid = m_linetree.CreateProxy(ab, 0);
     const int lineid = m_linebuff.addLine(a, b, treeid);
     m_linetree.SetStoredValue(treeid, lineid);
-
-    //this is silly but ok for now
-    for (const std::unique_ptr<Light>& light : m_lights)
-    {
-        light->markDirty();
-    }
-
-    //DIRTY SOME LIGHTS SOMEHOW
-
-#warning "makde this and others be functions that call putLineIntoBuffer and diryt right light, dont make 'addline*' call each other"
-
-    //return lineid;
+    return lineid;
 }
 
-void ShadowWorld::addLines(const sf::Vector2f* v, unsigned len)
+int ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
 {
+    const b2AABB dirty(getAABB(a, b));
+    dirtyLights(dirty);
+    return putLineIntoBuffer(a, b, dirty);
+}
+
+void ShadowWorld::addLines(const sf::Vector2f * v, unsigned len)
+{
+    b2AABB dirty(get0AABB());
     const unsigned count = len / 2u;
 
     for (unsigned i = 0u; i < count; ++i)
     {
-        addLine(v[2 * i], v[2 * i + 1]);
+        const b2AABB ab(getAABB(v[2 * i], v[2 * i + 1u]));
+        dirty.Combine(ab);
+        putLineIntoBuffer(v[2 * i], v[2 * i + 1u], ab);
     }
+
+    dirtyLights(dirty);
 }
 
-void ShadowWorld::addLinesStrip(const sf::Vector2f* v, unsigned len)
+void ShadowWorld::addLinesStrip(const sf::Vector2f * v, unsigned len)
 {
+    b2AABB dirty(get0AABB());
+
     for (unsigned i = 0u; i < (len - 1u); ++i)
     {
-        addLine(v[i], v[i + 1u]);
+        const b2AABB ab(getAABB(v[i], v[i + 1u]));
+        dirty.Combine(ab);
+        putLineIntoBuffer(v[i], v[i + 1u], ab);
     }
+
+    dirtyLights(dirty);
+}
+
+void ShadowWorld::dirtyLights(const b2AABB& ab)
+{
+    std::vector<Light*> swp;
+    swp.swap(m_queriedlights);
+    queryLights(ab);
+
+    for (Light * light : m_queriedlights) light->markDirty();
+
+    swp.swap(m_queriedlights);
 }
 
 void ShadowWorld::update()
@@ -323,5 +350,7 @@ void ShadowWorld::queryLights(const b2AABB& ab)
         }
     }
 }
+
+
 
 }

@@ -35,7 +35,7 @@ public:
 
 
     //lines:
-    void addLine(sf::Vector2f a, sf::Vector2f b);
+    int addLine(sf::Vector2f a, sf::Vector2f b);
     void addLines(const sf::Vector2f * v, unsigned len);
     void addLinesStrip(const sf::Vector2f * v, unsigned len);
     //void removeLine(int lineid);
@@ -57,7 +57,12 @@ public:
 private:
 
     void queryLights(const b2AABB& ab);
+
     bool queryLineCallback(int id);
+
+    int putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const b2AABB& ab);
+    
+    void dirtyLights(const b2AABB& ab);
 
     ShadowLinesBuffer m_linebuff;
     b2DynamicTree m_linetree;
