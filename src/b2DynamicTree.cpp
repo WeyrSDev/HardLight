@@ -1,4 +1,11 @@
 /*
+ Notice:
+ This file has been heavily altered, it is NOT the original software.
+ If you seek original software of Box2D by Erin Catto see the link below.
+ This notice has been placed to comply with point 2. of zlib license(see below).
+ */
+
+/*
  * Copyright (c) 2009 Erin Catto http://www.box2d.org
  *
  * This software is provided 'as-is', without any express or implied
