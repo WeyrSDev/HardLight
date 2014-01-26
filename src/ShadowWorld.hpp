@@ -19,14 +19,16 @@
 
 namespace ee {
 
+class LightDef;
+
 class ShadowWorld
 {
 
 public:
 
     //lights:
-    Light * addLight(sf::Vector2f p, float r); //change this to good init struct with named param idiom?
-    void removeLight(Light * ptr); //add ref overload too?
+    Light * addLight(const LightDef& ld = LightDef());
+    void removeLight(Light * ptr);
     void removeAllLights();
     unsigned getLightsCount()const;
     Light * getLight(unsigned i)const;
@@ -36,9 +38,10 @@ public:
 
     //lines:
     int addLine(sf::Vector2f a, sf::Vector2f b);
-    void addLines(const sf::Vector2f * v, unsigned len);
-    void addLinesStrip(const sf::Vector2f * v, unsigned len);
-    //void removeLine(int lineid);
+    void addLines(const sf::Vector2f * v, unsigned len, int * ids = nullptr);
+    void addLinesStrip(const sf::Vector2f * v, unsigned len, int * ids = nullptr);
+    void removeLine(int lineid);
+    void removeLines(int * ids, unsigned len);
     void removeAllLines();
     unsigned getLinesCount()const;
     const ShadowLine& getLineById(int id)const;
@@ -61,7 +64,7 @@ private:
     bool queryLineCallback(int id);
 
     int putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const b2AABB& ab);
-    
+
     void dirtyLights(const b2AABB& ab);
 
     ShadowLinesBuffer m_linebuff;

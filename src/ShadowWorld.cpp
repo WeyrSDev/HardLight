@@ -126,20 +126,11 @@ bool intersects(const b2AABB& a, const b2AABB& b)
 
 }
 
-Light * ShadowWorld::addLight(sf::Vector2f p, float r)
+Light * ShadowWorld::addLight(const LightDef& ld)
 {
     m_lights.emplace_back(new Light);
     Light * light = m_lights.back().get();
-
-    light->m_pos = p;
-    light->m_radius = r;
-    light->m_spread = pi2;
-    light->m_angle = 0.f;
-    light->m_color = sf::Color::White;
-    light->markDirty();
-    light->m_in = intersects(getAABB(light), m_viewrect);
-    light->m_owner = this;
-
+    light->syncWithDef(ld);
     return light;
 }
 
@@ -175,7 +166,7 @@ int ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
     return putLineIntoBuffer(a, b, dirty);
 }
 
-void ShadowWorld::addLines(const sf::Vector2f * v, unsigned len)
+void ShadowWorld::addLines(const sf::Vector2f * v, unsigned len, int * ids)
 {
     b2AABB dirty(get0AABB());
     const unsigned count = len / 2u;
@@ -184,13 +175,14 @@ void ShadowWorld::addLines(const sf::Vector2f * v, unsigned len)
     {
         const b2AABB ab(getAABB(v[2 * i], v[2 * i + 1u]));
         dirty.Combine(ab);
-        putLineIntoBuffer(v[2 * i], v[2 * i + 1u], ab);
+        const int lineid = putLineIntoBuffer(v[2 * i], v[2 * i + 1u], ab);
+        if (ids) ids[i] = lineid;
     }
 
     dirtyLights(dirty);
 }
 
-void ShadowWorld::addLinesStrip(const sf::Vector2f * v, unsigned len)
+void ShadowWorld::addLinesStrip(const sf::Vector2f * v, unsigned len, int * ids)
 {
     b2AABB dirty(get0AABB());
 
@@ -198,10 +190,38 @@ void ShadowWorld::addLinesStrip(const sf::Vector2f * v, unsigned len)
     {
         const b2AABB ab(getAABB(v[i], v[i + 1u]));
         dirty.Combine(ab);
-        putLineIntoBuffer(v[i], v[i + 1u], ab);
+        const int lineid = putLineIntoBuffer(v[i], v[i + 1u], ab);
+        if (ids) ids[i] = lineid;
     }
 
     dirtyLights(dirty);
+}
+
+void ShadowWorld::removeLine(int lineid)
+{
+    const int treeid = m_linebuff.getLine(lineid).getTreeId();
+    m_linebuff.removeLine(lineid);
+
+    const b2AABB ab = m_linetree.GetFatAABB(treeid);
+    m_linetree.DestroyProxy(treeid);
+
+    dirtyLights(ab);
+}
+
+void ShadowWorld::removeLines(int * ids, unsigned len)
+{
+    b2AABB ab(get0AABB());
+
+    for (unsigned i = 0u; i < len; ++i)
+    {
+        const int treeid = m_linebuff.getLine(ids[i]).getTreeId();
+        m_linebuff.removeLine(ids[i]);
+
+        ab.Combine(m_linetree.GetFatAABB(treeid));
+        m_linetree.DestroyProxy(treeid);
+    }
+
+    dirtyLights(ab);
 }
 
 void ShadowWorld::dirtyLights(const b2AABB& ab)
@@ -339,7 +359,7 @@ const ShadowLine& ShadowWorld::getQueriedLine(unsigned i) const
 
 void ShadowWorld::setViewRect(sf::FloatRect rect)
 {
-#warning "is taht ok to do without dirtying or inning lights? prolly yes cus inning is for teleports and cam teleport is covered?"
+    //should be OK for 'teleporting' lights out of screen zone but be careful
     m_viewrect.lowerBound.Set(rect.left, rect.top);
     m_viewrect.upperBound.Set(rect.left + rect.width, rect.top + rect.height);
 }
@@ -359,8 +379,6 @@ bool ShadowWorld::queryLineCallback(int id)
 
 void ShadowWorld::queryLights(const b2AABB& ab)
 {
-#warning "light that were in frame but now teleported out(moved out fast) need update too!"
-
     m_queriedlights.clear();
 
     for (const std::unique_ptr<Light>& light : m_lights)

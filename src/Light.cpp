@@ -4,6 +4,16 @@
 
 namespace ee {
 
+LightDef::LightDef() :
+Position(0.f, 0.f),
+Radius(100.f),
+Color(sf::Color::White),
+Angle(0.f),
+Spread(pi2)
+{
+
+}
+
 sf::Vector2f Light::getPosition() const
 {
     return m_pos;
@@ -84,5 +94,14 @@ void Light::remove()
     m_owner->removeLight(this);
 }
 
+void Light::syncWithDef(const LightDef& ld)
+{
+    m_pos = ld.Position;
+    m_radius = ld.Radius;
+    m_color = ld.Color;
+    m_angle = ld.Angle;
+    m_spread = ld.Spread;
+    markDirty();
+}
 
 }

@@ -16,8 +16,22 @@ namespace ee {
 
 class ShadowWorld;
 
+class LightDef
+{
+
+public:
+    LightDef();
+
+    sf::Vector2f Position;
+    float Radius;
+    sf::Color Color;
+    float Angle;
+    float Spread;
+};
+
 class Shadow
 {
+
 public:
     sf::Vector2f vertices[4];
 };
@@ -44,6 +58,7 @@ public:
     void setSpread(float s);
 
     void markDirty();
+    void syncWithDef(const LightDef& ld);
 
     //helpers to not dirty without need(normal setters always do) these compare
     //first, set later, no color setter - setting color doesnt dirty the light
@@ -56,9 +71,9 @@ public:
 
     unsigned getShadowsCount()const;
     const Shadow& getShadow(unsigned i)const;
-    
+
     void remove();
-    
+
 private:
 
     sf::Vector2f m_pos;
@@ -69,9 +84,9 @@ private:
 
     bool m_dirty;
     bool m_in;
-    
+
     ShadowWorld * m_owner;
-    
+
     std::vector<Shadow> m_shadows;
     std::vector<sf::Vector2f> m_cached;
 

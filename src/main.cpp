@@ -4,14 +4,8 @@
 
 int main()
 {
-    sf::ContextSettings set;
-
-    set.antialiasingLevel = 4u;
-
-    sf::RenderWindow app(sf::VideoMode(640u, 480u), "lights", sf::Style::Default, set);
+    sf::RenderWindow app(sf::VideoMode(640u, 480u), "lights");
     app.setFramerateLimit(60u);
-
-    std::printf("%u\n", app.getSettings().antialiasingLevel);
 
     //prepare shadow world and set its view
     ee::ShadowWorld sw;
@@ -22,9 +16,10 @@ int main()
     lp.setSize(640u, 480u);
     lp.enableFragFromFile("light.frag");
 
-    ee::Light * lit = sw.addLight(sf::Vector2f(0.f, 0.f), 100.f);
-    lit->setColor(sf::Color::Red);
-    lit->setSpread(ee::halfpi);
+    ee::LightDef ldef;
+    ldef.Color = sf::Color::Green;
+    ldef.Radius = 300.f;
+    ee::Light * lit = sw.addLight(ldef);
 
     bool adding = false;
     sf::Vector2f p1;
@@ -50,7 +45,9 @@ int main()
                     }
                     else if (eve.mouseButton.button == sf::Mouse::Right)
                     {
-                        sw.addLight(sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y), 150.f);
+                        ldef = ee::LightDef();
+                        ldef.Position = sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y);
+                        sw.addLight(ldef);
                     }
                     break;
                 case sf::Event::MouseButtonReleased:
