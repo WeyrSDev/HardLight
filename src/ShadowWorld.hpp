@@ -51,6 +51,7 @@ public:
 
     //handling:
     void update();
+    void rebuildLineTree();
     void setViewRect(sf::FloatRect rect);
     sf::FloatRect getViewRect()const;
 

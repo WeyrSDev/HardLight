@@ -302,6 +302,11 @@ void ShadowWorld::update()
     }//for light
 }
 
+void ShadowWorld::rebuildLineTree()
+{
+    m_linetree.RebuildBottomUp();
+}
+
 unsigned ShadowWorld::getLightsCount() const
 {
     return m_lights.size();
