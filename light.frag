@@ -6,6 +6,6 @@ void main()
 
     multi = sqrt(multi);
 
-	gl_FragColor = gl_Color * multi;
+    gl_FragColor = gl_Color * multi;
 }
 
