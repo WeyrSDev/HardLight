@@ -34,13 +34,13 @@
 
 namespace ee {
 
-const int b2_nullNode = -1;
+const int nullNode = -1;
 
 //REWRITE THESE AS GLOBAL FUNS ON SFVEC2F
 
 /// This function is used to ensure that a floating point number is not a NaN or infinity.
 
-inline bool b2IsValid(float x)
+inline bool NotNanOrInf(float x)
 {
     int ix = *reinterpret_cast<int*> (&x);
     return (ix & 0x7f800000) != 0x7f800000;
@@ -48,16 +48,16 @@ inline bool b2IsValid(float x)
 
 /// A 2D column vector.
 
-struct b2Vec2
+struct Vec2
 {
 
     /// Default constructor does nothing (for performance).
 
-    b2Vec2() { }
+    Vec2() { }
 
     /// Construct using coordinates.
 
-    b2Vec2(float x, float y) : x(x), y(y) { }
+    Vec2(float x, float y) : x(x), y(y) { }
 
     /// Set this vector to all zeros.
 
@@ -77,9 +77,9 @@ struct b2Vec2
 
     /// Negate this vector.
 
-    b2Vec2 operator -() const
+    Vec2 operator -() const
     {
-        b2Vec2 v;
+        Vec2 v;
         v.Set(-x, -y);
         return v;
     }
@@ -100,7 +100,7 @@ struct b2Vec2
 
     /// Add a vector to this vector.
 
-    void operator +=(const b2Vec2& v)
+    void operator +=(const Vec2& v)
     {
         x += v.x;
         y += v.y;
@@ -108,7 +108,7 @@ struct b2Vec2
 
     /// Subtract a vector from this vector.
 
-    void operator -=(const b2Vec2& v)
+    void operator -=(const Vec2& v)
     {
         x -= v.x;
         y -= v.y;
@@ -157,7 +157,7 @@ struct b2Vec2
 
     bool IsValid() const
     {
-        return b2IsValid(x) && b2IsValid(y);
+        return NotNanOrInf(x) && NotNanOrInf(y);
     }
 
     float x, y;
@@ -165,14 +165,14 @@ struct b2Vec2
 
 /// Perform the dot product on two vectors.
 
-inline float b2Dot(const b2Vec2& a, const b2Vec2& b)
+inline float b2Dot(const Vec2& a, const Vec2& b)
 {
     return a.x * b.x + a.y * b.y;
 }
 
 /// Perform the cross product on two vectors. In 2D this produces a scalar.
 
-inline float b2Cross(const b2Vec2& a, const b2Vec2& b)
+inline float Cross(const Vec2& a, const Vec2& b)
 {
     return a.x * b.y - a.y * b.x;
 }
@@ -180,9 +180,9 @@ inline float b2Cross(const b2Vec2& a, const b2Vec2& b)
 /// Perform the cross product on a scalar and a vector. In 2D this produces
 /// a vector.
 
-inline b2Vec2 b2Cross(float s, const b2Vec2& a)
+inline Vec2 Cross(float s, const Vec2& a)
 {
-    return b2Vec2(-s * a.y, s * a.x);
+    return Vec2(-s * a.y, s * a.x);
 }
 
 /// Multiply a matrix times a vector. If a rotation matrix is provided,
@@ -190,36 +190,36 @@ inline b2Vec2 b2Cross(float s, const b2Vec2& a)
 
 /// Add two vectors component-wise.
 
-inline b2Vec2 operator +(const b2Vec2& a, const b2Vec2& b)
+inline Vec2 operator +(const Vec2& a, const Vec2& b)
 {
-    return b2Vec2(a.x + b.x, a.y + b.y);
+    return Vec2(a.x + b.x, a.y + b.y);
 }
 
 /// Subtract two vectors component-wise.
 
-inline b2Vec2 operator -(const b2Vec2& a, const b2Vec2& b)
+inline Vec2 operator -(const Vec2& a, const Vec2& b)
 {
-    return b2Vec2(a.x - b.x, a.y - b.y);
+    return Vec2(a.x - b.x, a.y - b.y);
 }
 
-inline b2Vec2 operator *(float s, const b2Vec2& a)
+inline Vec2 operator *(float s, const Vec2& a)
 {
-    return b2Vec2(s * a.x, s * a.y);
+    return Vec2(s * a.x, s * a.y);
 }
 
-inline bool operator ==(const b2Vec2& a, const b2Vec2& b)
+inline bool operator ==(const Vec2& a, const Vec2& b)
 {
     return a.x == b.x && a.y == b.y;
 }
 
-inline b2Vec2 b2Min(const b2Vec2& a, const b2Vec2& b)
+inline Vec2 Min(const Vec2& a, const Vec2& b)
 {
-    return b2Vec2(std::min(a.x, b.x), std::min(a.y, b.y));
+    return Vec2(std::min(a.x, b.x), std::min(a.y, b.y));
 }
 
-inline b2Vec2 b2Max(const b2Vec2& a, const b2Vec2& b)
+inline Vec2 Max(const Vec2& a, const Vec2& b)
 {
-    return b2Vec2(std::max(a.x, b.x), std::max(a.y, b.y));
+    return Vec2(std::max(a.x, b.x), std::max(a.y, b.y));
 }
 
 /// This is a growable LIFO stack with an initial capacity of N.
@@ -227,19 +227,19 @@ inline b2Vec2 b2Max(const b2Vec2& a, const b2Vec2& b)
 /// to increase the size of the stack.
 
 template <typename T, int N>
-class b2GrowableStack
+class GrowableStack
 {
 
 public:
 
-    b2GrowableStack()
+    GrowableStack()
     {
         m_stack = m_array;
         m_count = 0;
         m_capacity = N;
     }
 
-    ~b2GrowableStack()
+    ~GrowableStack()
     {
         if (m_stack != m_array)
         {
@@ -287,26 +287,26 @@ private:
 
 /// Ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
 
-struct b2RayCastInput
+struct RayCastInput
 {
 
-    b2Vec2 p1, p2;
+    Vec2 p1, p2;
     float maxFraction;
 };
 
 /// Ray-cast output data. The ray hits at p1 + fraction * (p2 - p1), where p1 and p2
 /// come from b2RayCastInput.
 
-struct b2RayCastOutput
+struct RayCastOutput
 {
 
-    b2Vec2 normal;
+    Vec2 normal;
     float fraction;
 };
 
 /// An axis aligned bounding box.
 
-struct b2AABB
+struct AABB
 {
 
     /// Verify that the bounds are sorted.
@@ -314,14 +314,14 @@ struct b2AABB
 
     /// Get the center of the AABB.
 
-    b2Vec2 GetCenter() const
+    Vec2 GetCenter() const
     {
         return 0.5f * (lowerBound + upperBound);
     }
 
     /// Get the extents of the AABB (half-widths).
 
-    b2Vec2 GetExtents() const
+    Vec2 GetExtents() const
     {
         return 0.5f * (upperBound - lowerBound);
     }
@@ -337,23 +337,23 @@ struct b2AABB
 
     /// Combine an AABB into this one.
 
-    void Combine(const b2AABB& aabb)
+    void Combine(const AABB& aabb)
     {
-        lowerBound = b2Min(lowerBound, aabb.lowerBound);
-        upperBound = b2Max(upperBound, aabb.upperBound);
+        lowerBound = Min(lowerBound, aabb.lowerBound);
+        upperBound = Max(upperBound, aabb.upperBound);
     }
 
     /// Combine two AABBs into this one.
 
-    void Combine(const b2AABB& aabb1, const b2AABB& aabb2)
+    void Combine(const AABB& aabb1, const AABB& aabb2)
     {
-        lowerBound = b2Min(aabb1.lowerBound, aabb2.lowerBound);
-        upperBound = b2Max(aabb1.upperBound, aabb2.upperBound);
+        lowerBound = Min(aabb1.lowerBound, aabb2.lowerBound);
+        upperBound = Max(aabb1.upperBound, aabb2.upperBound);
     }
 
     /// Does this aabb contain the provided AABB.
 
-    bool Contains(const b2AABB& aabb) const
+    bool Contains(const AABB& aabb) const
     {
         bool result = true;
         result = result && lowerBound.x <= aabb.lowerBound.x;
@@ -363,25 +363,25 @@ struct b2AABB
         return result;
     }
 
-    bool RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const;
+    bool RayCast(RayCastOutput* output, const RayCastInput& input) const;
 
-    b2Vec2 lowerBound; ///< the lower vertex
-    b2Vec2 upperBound; ///< the upper vertex
+    Vec2 lowerBound; ///< the lower vertex
+    Vec2 upperBound; ///< the upper vertex
 };
 
 // ---------------- Inline Functions ------------------------------------------
 
-inline bool b2AABB::IsValid() const
+inline bool AABB::IsValid() const
 {
-    b2Vec2 d = upperBound - lowerBound;
+    Vec2 d = upperBound - lowerBound;
     bool valid = d.x >= 0.0f && d.y >= 0.0f;
     valid = valid && lowerBound.IsValid() && upperBound.IsValid();
     return valid;
 }
 
-inline bool b2TestOverlap(const b2AABB& a, const b2AABB& b)
+inline bool b2TestOverlap(const AABB& a, const AABB& b)
 {
-    b2Vec2 d1, d2;
+    Vec2 d1, d2;
     d1 = b.lowerBound - a.upperBound;
     d2 = a.lowerBound - b.upperBound;
 
@@ -396,16 +396,16 @@ inline bool b2TestOverlap(const b2AABB& a, const b2AABB& b)
 
 /// A node in the dynamic tree. The client does not interact with this directly.
 
-struct b2TreeNode
+struct TreeNode
 {
 
     bool IsLeaf() const
     {
-        return child1 == b2_nullNode;
+        return child1 == nullNode;
     }
 
     /// Enlarged AABB
-    b2AABB aabb;
+    AABB aabb;
 
     int storedValue;
 
@@ -432,18 +432,18 @@ struct b2TreeNode
 ///
 /// Nodes are pooled and relocatable, so we use node indices rather than pointers.
 
-class b2DynamicTree
+class DynamicTree
 {
 
 public:
     /// Constructing the tree initializes the node pool.
-    b2DynamicTree();
+    DynamicTree();
 
     /// Destroy the tree, freeing the node pool.
-    ~b2DynamicTree();
+    ~DynamicTree();
 
     /// Create a proxy. Provide a tight fitting AABB and a userData pointer.
-    int CreateProxy(const b2AABB& aabb, int value);
+    int CreateProxy(const AABB& aabb, int value);
 
     /// Destroy a proxy. This asserts if the id is invalid.
     void DestroyProxy(int proxyId);
@@ -452,7 +452,7 @@ public:
     /// then the proxy is removed from the tree and re-inserted. Otherwise
     /// the function returns immediately.
     /// @return true if the proxy was re-inserted.
-    bool MoveProxy(int proxyId, const b2AABB& aabb1, const b2Vec2& displacement);
+    bool MoveProxy(int proxyId, const AABB& aabb1, const Vec2& displacement);
 
     /// Get proxy user data.
     /// @return the proxy user data or 0 if the id is invalid.
@@ -461,12 +461,12 @@ public:
     void SetStoredValue(int proxyId, int value);
 
     /// Get the fat AABB for a proxy.
-    const b2AABB& GetFatAABB(int proxyId) const;
+    const AABB& GetFatAABB(int proxyId) const;
 
     /// Query an AABB for overlapping proxies. The callback class
     /// is called for each proxy that overlaps the supplied AABB.
     template <typename T>
-    void Query(T * callback, bool(T::*call)(int), const b2AABB& aabb) const;
+    void Query(T * callback, bool(T::*call)(int), const AABB& aabb) const;
 
     /// Ray-cast against the proxies in the tree. This relies on the callback
     /// to perform a exact ray-cast in the case were the proxy contains a shape.
@@ -476,7 +476,7 @@ public:
     /// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
     /// @param callback a callback class that is called for each proxy that is hit by the ray.
     template <typename T>
-    void RayCast(T* callback, const b2RayCastInput& input) const;
+    void RayCast(T* callback, const RayCastInput& input) const;
 
     /// Validate this tree. For testing.
     void Validate() const;
@@ -498,7 +498,7 @@ public:
     /// Shift the world origin. Useful for large worlds.
     /// The shift formula is: position -= newOrigin
     /// @param newOrigin the new origin with respect to the old origin
-    void ShiftOrigin(const b2Vec2& newOrigin);
+    void ShiftOrigin(const Vec2& newOrigin);
 
 
     void ClearAll();
@@ -523,7 +523,7 @@ private:
 
     int m_root;
 
-    b2TreeNode * m_nodes;
+    TreeNode * m_nodes;
     int m_nodeCount;
     int m_nodeCapacity;
 
@@ -538,44 +538,44 @@ private:
 
 };
 
-inline int b2DynamicTree::GetStoredValue(int proxyId) const
+inline int DynamicTree::GetStoredValue(int proxyId) const
 {
     assert(0 <= proxyId && proxyId < m_nodeCapacity);
     return m_nodes[proxyId].storedValue;
 }
 
-inline void b2DynamicTree::SetStoredValue(int proxyId, int value)
+inline void DynamicTree::SetStoredValue(int proxyId, int value)
 {
     assert(0 <= proxyId && proxyId < m_nodeCapacity);
     m_nodes[proxyId].storedValue = value;
 }
 
-inline const b2AABB& b2DynamicTree::GetFatAABB(int proxyId) const
+inline const AABB& DynamicTree::GetFatAABB(int proxyId) const
 {
     assert(0 <= proxyId && proxyId < m_nodeCapacity);
     return m_nodes[proxyId].aabb;
 }
 
-inline void b2DynamicTree::SetPadding(float p)
+inline void DynamicTree::SetPadding(float p)
 {
     m_padding = p;
 }
 
 template <typename T>
-inline void b2DynamicTree::Query(T * callback, bool(T::*call)(int), const b2AABB& aabb) const
+inline void DynamicTree::Query(T * callback, bool(T::*call)(int), const AABB& aabb) const
 {
-    b2GrowableStack<int, 256> stack;
+    GrowableStack<int, 256> stack;
     stack.Push(m_root);
 
     while (stack.GetCount() > 0)
     {
         int nodeId = stack.Pop();
-        if (nodeId == b2_nullNode)
+        if (nodeId == nullNode)
         {
             continue;
         }
 
-        const b2TreeNode* node = m_nodes + nodeId;
+        const TreeNode* node = m_nodes + nodeId;
 
         if (b2TestOverlap(node->aabb, aabb))
         {
@@ -597,17 +597,17 @@ inline void b2DynamicTree::Query(T * callback, bool(T::*call)(int), const b2AABB
 }
 
 template <typename T>
-inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) const
+inline void DynamicTree::RayCast(T* callback, const RayCastInput& input) const
 {
-    b2Vec2 p1 = input.p1;
-    b2Vec2 p2 = input.p2;
-    b2Vec2 r = p2 - p1;
+    Vec2 p1 = input.p1;
+    Vec2 p2 = input.p2;
+    Vec2 r = p2 - p1;
     assert(r.LengthSquared() > 0.0f);
     r.Normalize();
 
     // v is perpendicular to the segment.
-    b2Vec2 v = b2Cross(1.0f, r);
-    b2Vec2 abs_v(std::abs(v.x), std::abs(v.y));
+    Vec2 v = Cross(1.0f, r);
+    Vec2 abs_v(std::abs(v.x), std::abs(v.y));
 
     // Separating axis for segment (Gino, p80).
     // |dot(v, p1 - c)| > dot(|v|, h)
@@ -615,25 +615,25 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
     float maxFraction = input.maxFraction;
 
     // Build a bounding box for the segment.
-    b2AABB segmentAABB;
+    AABB segmentAABB;
     {
-        b2Vec2 t = p1 + maxFraction * (p2 - p1);
-        segmentAABB.lowerBound = b2Min(p1, t);
-        segmentAABB.upperBound = b2Max(p1, t);
+        Vec2 t = p1 + maxFraction * (p2 - p1);
+        segmentAABB.lowerBound = Min(p1, t);
+        segmentAABB.upperBound = Max(p1, t);
     }
 
-    b2GrowableStack<int, 256> stack;
+    GrowableStack<int, 256> stack;
     stack.Push(m_root);
 
     while (stack.GetCount() > 0)
     {
         int nodeId = stack.Pop();
-        if (nodeId == b2_nullNode)
+        if (nodeId == nullNode)
         {
             continue;
         }
 
-        const b2TreeNode* node = m_nodes + nodeId;
+        const TreeNode* node = m_nodes + nodeId;
 
         if (b2TestOverlap(node->aabb, segmentAABB) == false)
         {
@@ -642,8 +642,8 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 
         // Separating axis for segment (Gino, p80).
         // |dot(v, p1 - c)| > dot(|v|, h)
-        b2Vec2 c = node->aabb.GetCenter();
-        b2Vec2 h = node->aabb.GetExtents();
+        Vec2 c = node->aabb.GetCenter();
+        Vec2 h = node->aabb.GetExtents();
         float separation = std::abs(b2Dot(v, p1 - c)) - b2Dot(abs_v, h);
         if (separation > 0.0f)
         {
@@ -652,7 +652,7 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
 
         if (node->IsLeaf())
         {
-            b2RayCastInput subInput;
+            RayCastInput subInput;
             subInput.p1 = input.p1;
             subInput.p2 = input.p2;
             subInput.maxFraction = maxFraction;
@@ -669,9 +669,9 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
             {
                 // Update segment bounding box.
                 maxFraction = value;
-                b2Vec2 t = p1 + maxFraction * (p2 - p1);
-                segmentAABB.lowerBound = b2Min(p1, t);
-                segmentAABB.upperBound = b2Max(p1, t);
+                Vec2 t = p1 + maxFraction * (p2 - p1);
+                segmentAABB.lowerBound = Min(p1, t);
+                segmentAABB.upperBound = Max(p1, t);
             }
         }
         else

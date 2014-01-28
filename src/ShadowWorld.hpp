@@ -60,22 +60,22 @@ public:
 
 private:
 
-    void queryLights(const b2AABB& ab);
+    void queryLights(const AABB& ab);
 
     bool queryLineCallback(int id);
 
-    int putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const b2AABB& ab);
+    int putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const AABB& ab);
 
-    void dirtyLights(const b2AABB& ab);
+    void dirtyLights(const AABB& ab);
 
     ShadowLinesBuffer m_linebuff;
-    b2DynamicTree m_linetree;
+    DynamicTree m_linetree;
     std::vector<ShadowLine> m_queriedlines;
 
     std::vector<std::unique_ptr<Light> > m_lights;
     std::vector<Light*> m_queriedlights;
 
-    b2AABB m_viewrect;
+    AABB m_viewrect;
 
 };
 

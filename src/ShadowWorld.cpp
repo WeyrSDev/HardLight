@@ -82,44 +82,44 @@ float lengthSquared(sf::Vector2f v)
     return v.x * v.x + v.y * v.y;
 }
 
-b2AABB getAABB(sf::Vector2f a, sf::Vector2f b)
+AABB getAABB(sf::Vector2f a, sf::Vector2f b)
 {
     if (a.x == b.x) b.x += 1.f;
     if (a.y == b.y) b.y += 1.f;
 
-    b2AABB ab;
+    AABB ab;
     ab.lowerBound.Set(std::min(a.x, b.x), std::min(a.y, b.y));
     ab.upperBound.Set(std::max(a.x, b.x), std::max(a.y, b.y));
     return ab;
 }
 
-b2AABB getAABB(Light * light)
+AABB getAABB(Light * light)
 {
     const auto p = light->getPosition();
     const float r = light->getRadius();
 
-    b2AABB ab;
+    AABB ab;
     ab.lowerBound.Set(p.x - r, p.y - r);
     ab.upperBound.Set(p.x + r, p.y + r);
     return ab;
 }
 
-b2AABB get0AABB()
+AABB get0AABB()
 {
-    b2AABB ab;
+    AABB ab;
     ab.lowerBound.SetZero();
     ab.upperBound.SetZero();
     return ab;
 }
 
-sf::FloatRect toSF(const b2AABB& b)
+sf::FloatRect toSF(const AABB& b)
 {
     const auto l = b.lowerBound;
     const auto u = b.upperBound;
     return sf::FloatRect(l.x, l.y, u.x - l.x, u.y - l.y);
 }
 
-bool intersects(const b2AABB& a, const b2AABB& b)
+bool intersects(const AABB& a, const AABB& b)
 {
     return toSF(a).intersects(toSF(b));
 }
@@ -151,7 +151,7 @@ void ShadowWorld::removeAllLights()
     m_lights.clear();
 }
 
-int ShadowWorld::putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const b2AABB& ab)
+int ShadowWorld::putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const AABB& ab)
 {
     const int treeid = m_linetree.CreateProxy(ab, 0);
     const int lineid = m_linebuff.addLine(a, b, treeid);
@@ -161,19 +161,19 @@ int ShadowWorld::putLineIntoBuffer(sf::Vector2f a, sf::Vector2f b, const b2AABB&
 
 int ShadowWorld::addLine(sf::Vector2f a, sf::Vector2f b)
 {
-    const b2AABB dirty(getAABB(a, b));
+    const AABB dirty(getAABB(a, b));
     dirtyLights(dirty);
     return putLineIntoBuffer(a, b, dirty);
 }
 
 void ShadowWorld::addLines(const sf::Vector2f * v, unsigned len, int * ids)
 {
-    b2AABB dirty(get0AABB());
+    AABB dirty(get0AABB());
     const unsigned count = len / 2u;
 
     for (unsigned i = 0u; i < count; ++i)
     {
-        const b2AABB ab(getAABB(v[2 * i], v[2 * i + 1u]));
+        const AABB ab(getAABB(v[2 * i], v[2 * i + 1u]));
         dirty.Combine(ab);
         const int lineid = putLineIntoBuffer(v[2 * i], v[2 * i + 1u], ab);
         if (ids) ids[i] = lineid;
@@ -184,11 +184,11 @@ void ShadowWorld::addLines(const sf::Vector2f * v, unsigned len, int * ids)
 
 void ShadowWorld::addLinesStrip(const sf::Vector2f * v, unsigned len, int * ids)
 {
-    b2AABB dirty(get0AABB());
+    AABB dirty(get0AABB());
 
     for (unsigned i = 0u; i < (len - 1u); ++i)
     {
-        const b2AABB ab(getAABB(v[i], v[i + 1u]));
+        const AABB ab(getAABB(v[i], v[i + 1u]));
         dirty.Combine(ab);
         const int lineid = putLineIntoBuffer(v[i], v[i + 1u], ab);
         if (ids) ids[i] = lineid;
@@ -202,7 +202,7 @@ void ShadowWorld::removeLine(int lineid)
     const int treeid = m_linebuff.getLine(lineid).getTreeId();
     m_linebuff.removeLine(lineid);
 
-    const b2AABB ab = m_linetree.GetFatAABB(treeid);
+    const AABB ab = m_linetree.GetFatAABB(treeid);
     m_linetree.DestroyProxy(treeid);
 
     dirtyLights(ab);
@@ -210,7 +210,7 @@ void ShadowWorld::removeLine(int lineid)
 
 void ShadowWorld::removeLines(int * ids, unsigned len)
 {
-    b2AABB ab(get0AABB());
+    AABB ab(get0AABB());
 
     for (unsigned i = 0u; i < len; ++i)
     {
@@ -224,7 +224,7 @@ void ShadowWorld::removeLines(int * ids, unsigned len)
     dirtyLights(ab);
 }
 
-void ShadowWorld::dirtyLights(const b2AABB& ab)
+void ShadowWorld::dirtyLights(const AABB& ab)
 {
     std::vector<Light*> swp;
     swp.swap(m_queriedlights);
@@ -382,7 +382,7 @@ bool ShadowWorld::queryLineCallback(int id)
     return true;
 }
 
-void ShadowWorld::queryLights(const b2AABB& ab)
+void ShadowWorld::queryLights(const AABB& ab)
 {
     m_queriedlights.clear();
 
@@ -390,7 +390,7 @@ void ShadowWorld::queryLights(const b2AABB& ab)
     {
         const auto p = light->getPosition();
         const float r = light->getRadius();
-        b2AABB lab;
+        AABB lab;
         lab.lowerBound.Set(p.x - r, p.y - r);
         lab.upperBound.Set(p.x + r, p.y + r);
 
