@@ -23,7 +23,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "b2DynamicTree.h"
+#include "DynamicTree.hpp"
 #include <cstring>
 #include <algorithm>
 #include <cassert>

@@ -14,7 +14,7 @@
 #include <SFML/System/Vector2.hpp>
 #include "PI.hpp"
 #include "DebugGeometryPainter.hpp"
-#include "b2DynamicTree.h"
+#include "DynamicTree.hpp"
 #include "ShadowLinesBuffer.hpp"
 
 namespace ee {
