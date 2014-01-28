@@ -9,6 +9,8 @@
 #define	LIGHTPAINTER_HPP
 
 #include <SFML/Graphics/RenderTexture.hpp>
+#include <SFML/Graphics/Shader.hpp>
+#include <SFML/Graphics/Color.hpp>
 
 namespace hlt {
 
