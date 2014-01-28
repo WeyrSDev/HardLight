@@ -250,10 +250,6 @@ void ShadowWorld::update()
         if (light->m_dirty)
         {
             light->m_cached.clear();
-
-            static int yy = 0;
-            std::printf("doing a calc %d\n", ++yy); //debug print
-
             light->m_shadows.clear();
 
             for (const ShadowLine& line : m_queriedlines)
