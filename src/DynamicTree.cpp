@@ -30,7 +30,7 @@
 #include <limits>
 
 
-namespace ee {
+namespace hlt {
 // From Real-time Collision Detection, p179.
 
 bool AABB::RayCast(RayCastOutput* output, const RayCastInput& input) const

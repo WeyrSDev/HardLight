@@ -8,18 +8,18 @@ int main()
     app.setFramerateLimit(60u);
 
     //prepare shadow world and set its view
-    ee::ShadowWorld sw;
+    hlt::ShadowWorld sw;
     sw.setViewRect(sf::FloatRect(0.f, 0.f, 640.f, 480.f));
 
     //prepare light painter and set internal texture size
-    ee::LightPainter lp;
+    hlt::LightPainter lp;
     lp.setSize(640u, 480u);
     lp.enableFragFromFile("light.frag");
 
-    ee::LightDef ldef;
+    hlt::LightDef ldef;
     ldef.Color = sf::Color::Green;
     ldef.Radius = 300.f;
-    ee::Light * lit = sw.addLight(ldef);
+    hlt::Light * lit = sw.addLight(ldef);
 
     bool adding = false;
     sf::Vector2f p1;
@@ -45,7 +45,7 @@ int main()
                     }
                     else if (eve.mouseButton.button == sf::Mouse::Right)
                     {
-                        ldef = ee::LightDef();
+                        ldef = hlt::LightDef();
                         ldef.Position = sf::Vector2f(eve.mouseButton.x, eve.mouseButton.y);
                         sw.addLight(ldef);
                     }

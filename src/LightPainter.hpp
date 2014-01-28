@@ -10,7 +10,7 @@
 
 #include <SFML/Graphics/RenderTexture.hpp>
 
-namespace ee {
+namespace hlt {
 
 class ShadowWorld;
 

@@ -1,7 +1,7 @@
 #include "DebugGeometryPainter.hpp"
 #include <SFML/Graphics.hpp>
 
-namespace ee {
+namespace hlt {
 
 DebugGeometryPainter::DebugGeometryPainter()
 {

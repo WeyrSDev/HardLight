@@ -8,7 +8,7 @@
 #ifndef PI_HPP
 #define	PI_HPP
 
-namespace ee{
+namespace hlt{
 
 const float pi = 3.14159265359f;
 const float halfpi = pi / 2.f;

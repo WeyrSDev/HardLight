@@ -18,7 +18,7 @@ namespace sf {
 class RenderTarget;
 }
 
-namespace ee {
+namespace hlt {
 
 class DebugGeometryPainter
 {

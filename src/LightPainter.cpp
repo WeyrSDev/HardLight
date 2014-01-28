@@ -7,7 +7,7 @@
 #include "ShadowWorld.hpp"
 #include "DebugGeometryPainter.hpp"
 
-namespace ee {
+namespace hlt {
 
 void LightPainter::setSize(unsigned x, unsigned y)
 {

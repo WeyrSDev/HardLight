@@ -11,7 +11,7 @@
 #include <vector>
 #include <SFML/System/Vector2.hpp>
 
-namespace ee {
+namespace hlt {
 
 class ShadowLine
 {

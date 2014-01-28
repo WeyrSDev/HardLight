@@ -3,7 +3,7 @@
 #include <polyclipping/clipper.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
-namespace ee {
+namespace hlt {
 
 namespace clip = ClipperLib;
 
@@ -58,7 +58,7 @@ clip::Polygon circl(sf::Vector2f v, float r, float angle, float spread)
 {
     std::vector<sf::Vector2f> mid;
 
-    if (spread + 1.f / 30.f * ee::pi2 < ee::pi2) mid.push_back(v); //fix for cones
+    if (spread + 1.f / 30.f * hlt::pi2 < hlt::pi2) mid.push_back(v); //fix for cones
 
     for (int i = 0; i < 30; ++i)
     {

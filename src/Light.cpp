@@ -2,7 +2,7 @@
 #include "ShadowWorld.hpp"
 #include <cassert>
 
-namespace ee {
+namespace hlt {
 
 LightDef::LightDef() :
 Position(0.f, 0.f),

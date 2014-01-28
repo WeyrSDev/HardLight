@@ -12,7 +12,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics/Color.hpp>
 
-namespace ee {
+namespace hlt {
 
 class ShadowWorld;
 

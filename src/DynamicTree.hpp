@@ -32,7 +32,7 @@
 #include <cmath>
 #include <limits>
 
-namespace ee {
+namespace hlt {
 
 const int nullNode = -1;
 

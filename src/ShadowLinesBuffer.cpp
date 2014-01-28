@@ -1,7 +1,7 @@
 #include "ShadowLinesBuffer.hpp"
 #include <cassert>
 
-namespace ee {
+namespace hlt {
 
 const int InvalidFreeIndex = -1;
 

@@ -17,7 +17,7 @@
 #include "DynamicTree.hpp"
 #include "ShadowLinesBuffer.hpp"
 
-namespace ee {
+namespace hlt {
 
 class LightDef;
 
