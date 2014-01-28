@@ -27,11 +27,15 @@ public:
 
     bool enableFragFromFile(const std::string& fn);
 
+    void setAmbient(sf::Color ambient);
+    sf::Color getAmbient() const;
+
 private:
     sf::RenderTexture m_sumtex;
 
     sf::Shader m_frag;
     bool m_fragenabled;
+    sf::Color m_ambient;
 };
 
 inline const sf::Texture& LightPainter::getCanvas() const

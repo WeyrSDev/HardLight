@@ -41,7 +41,7 @@ float radius, const sf::Vector2f * p, unsigned len, sf::Color c)
 
 void LightPainter::render(ShadowWorld& w)
 {
-    m_sumtex.clear();
+    m_sumtex.clear(m_ambient);
 
     for (int i = 0; i < w.getQueriedLightsCount(); ++i)
     {
@@ -59,5 +59,16 @@ bool LightPainter::enableFragFromFile(const std::string& fn)
     m_fragenabled = m_frag.loadFromFile(fn, sf::Shader::Fragment);
     return isFragEnabled();
 }
+
+void LightPainter::setAmbient(sf::Color ambient)
+{
+    m_ambient = ambient;
+}
+
+sf::Color LightPainter::getAmbient() const
+{
+    return m_ambient;
+}
+
 
 }
