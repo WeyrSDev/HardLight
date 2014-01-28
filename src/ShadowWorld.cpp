@@ -54,19 +54,24 @@ std::vector<sf::Vector2f> translate(const clip::Polygon& in)
     return out;
 }
 
-clip::Polygon circl(sf::Vector2f v, float r, float angle, float spread)
+std::vector<sf::Vector2f> circlS(sf::Vector2f v, float r, float angle, float spread)
 {
-    std::vector<sf::Vector2f> mid;
+    std::vector<sf::Vector2f> ret;
 
-    if (spread + 1.f / 30.f * hlt::pi2 < hlt::pi2) mid.push_back(v); //fix for cones
+    if (spread + 1.f / 30.f * hlt::pi2 < hlt::pi2) ret.push_back(v); //fix for cones
 
     for (int i = 0; i < 30; ++i)
     {
         const float arg = angle - spread / 2.f + spread * i / 29.f;
-        mid.push_back(v + r * sf::Vector2f(std::cos(arg), -std::sin(arg)));
+        ret.push_back(v + r * sf::Vector2f(std::cos(arg), -std::sin(arg)));
     }
 
-    return translate(mid);
+    return ret;
+}
+
+inline clip::Polygon circlP(sf::Vector2f v, float r, float angle, float spread)
+{
+    return translate(circlS(v, r, angle, spread));
 }
 
 sf::Vector2f setLength(sf::Vector2f v, float l)
@@ -251,6 +256,7 @@ void ShadowWorld::update()
         {
             light->m_cached.clear();
             light->m_shadows.clear();
+            bool touchedline = false;
 
             for (const ShadowLine& line : m_queriedlines)
             {
@@ -268,12 +274,20 @@ void ShadowWorld::update()
                 sh.vertices[2] = p + setLength(bd, rmul);
                 sh.vertices[3] = p + setLength(ad, rmul);
                 light->m_shadows.push_back(sh);
+                touchedline = true;
+            }
+
+            //don't perform all clipper conversions and all if light didn't touch a light
+            if (!touchedline)
+            {
+                light->m_cached = circlS(light->getPosition(), light->getRadius(), light->getAngle(), light->getSpread());
+                continue;
             }
 
             clip::Clipper clip;
 
             clip::Polygons out(1u);
-            out[0] = circl(light->getPosition(), light->getRadius(), light->getAngle(), light->getSpread());
+            out[0] = circlP(light->getPosition(), light->getRadius(), light->getAngle(), light->getSpread());
 
             if (clip::Orientation(out[0])) clip::ReversePolygon(out[0]);
 
