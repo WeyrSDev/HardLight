@@ -29,6 +29,8 @@
 #include <cassert>
 #include <limits>
 
+
+namespace ee {
 // From Real-time Collision Detection, p179.
 
 bool b2AABB::RayCast(b2RayCastOutput* output, const b2RayCastInput& input) const
@@ -888,4 +890,6 @@ void b2DynamicTree::ClearAll()
 
     m_path = 0;
     m_insertionCount = 0;
+}
+
 }

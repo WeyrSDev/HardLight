@@ -32,6 +32,8 @@
 #include <cmath>
 #include <limits>
 
+namespace ee {
+
 const int b2_nullNode = -1;
 
 //REWRITE THESE AS GLOBAL FUNS ON SFVEC2F
@@ -678,6 +680,8 @@ inline void b2DynamicTree::RayCast(T* callback, const b2RayCastInput& input) con
             stack.Push(node->child2);
         }
     }
+}
+
 }
 
 #endif
