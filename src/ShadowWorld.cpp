@@ -136,6 +136,7 @@ Light * ShadowWorld::addLight(const LightDef& ld)
     m_lights.emplace_back(new Light);
     Light * light = m_lights.back().get();
     light->syncWithDef(ld);
+    light->m_owner = this;
     return light;
 }
 
