@@ -21,9 +21,9 @@ sf::Vector2f point(clip::IntPoint v)
     return sf::Vector2f(v.X / scale, v.Y / scale);
 }
 
-clip::Polygon translate(const std::vector<sf::Vector2f>& in)
+clip::Path translate(const std::vector<sf::Vector2f>& in)
 {
-    clip::Polygon out;
+    clip::Path out;
 
     for (const auto v : in)
     {
@@ -33,16 +33,16 @@ clip::Polygon translate(const std::vector<sf::Vector2f>& in)
     return out;
 }
 
-clip::Polygon translate(const Shadow& sh)
+clip::Path translate(const Shadow& sh)
 {
-    clip::Polygon out;
+    clip::Path out;
 
     for (unsigned i = 0u; i < 4u; ++i) out.push_back(point(sh.vertices[i]));
 
     return out;
 }
 
-std::vector<sf::Vector2f> translate(const clip::Polygon& in)
+std::vector<sf::Vector2f> translate(const clip::Path& in)
 {
     std::vector<sf::Vector2f> out;
 
@@ -69,7 +69,7 @@ std::vector<sf::Vector2f> circlS(sf::Vector2f v, float r, float angle, float spr
     return ret;
 }
 
-inline clip::Polygon circlP(sf::Vector2f v, float r, float angle, float spread)
+inline clip::Path circlP(sf::Vector2f v, float r, float angle, float spread)
 {
     return translate(circlS(v, r, angle, spread));
 }
@@ -287,19 +287,19 @@ void ShadowWorld::update()
 
             clip::Clipper clip;
 
-            clip::Polygons out(1u);
+            clip::Paths out(1u);
             out[0] = circlP(light->getPosition(), light->getRadius(), light->getAngle(), light->getSpread());
 
-            if (clip::Orientation(out[0])) clip::ReversePolygon(out[0]);
+            if (clip::Orientation(out[0])) clip::ReversePath(out[0]);
 
-            clip.AddPolygon(out[0], clip::ptSubject);
+            clip.AddPath(out[0], clip::ptSubject, true);
 
             for (const auto& v : light->m_shadows)
             {
                 auto pl = translate(v);
                 clip::CleanPolygon(pl, 0.0); //to avoid segfaults from same points
-                if (clip::Orientation(pl)) clip::ReversePolygon(pl);
-                clip.AddPolygon(pl, clip::ptClip);
+                if (clip::Orientation(pl)) clip::ReversePath(pl);
+                clip.AddPath(pl, clip::ptClip, true);
             }//for poly
 
             clip.Execute(clip::ctDifference, out, clip::pftNonZero, clip::pftNonZero);
