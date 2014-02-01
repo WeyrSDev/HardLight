@@ -46,6 +46,8 @@ int ShadowLinesBuffer::removeLine(int lineid)
 
 void ShadowLinesBuffer::removeAll()
 {
+    if (m_count == 0) return;
+
     m_firstfree = 0;
     m_count = 0;
 
