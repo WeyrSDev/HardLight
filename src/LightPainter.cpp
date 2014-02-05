@@ -42,6 +42,7 @@ float radius, const sf::Vector2f * p, unsigned len, sf::Color c)
 void LightPainter::render(ShadowWorld& w)
 {
     m_sumtex.clear(m_ambient);
+    m_sumtex.setView(sf::View(w.getViewRect()));
 
     for (int i = 0; i < w.getQueriedLightsCount(); ++i)
     {

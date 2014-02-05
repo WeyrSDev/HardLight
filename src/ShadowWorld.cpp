@@ -63,7 +63,7 @@ std::vector<sf::Vector2f> circlS(sf::Vector2f v, float r, float angle, float spr
     for (int i = 0; i < 30; ++i)
     {
         const float arg = angle - spread / 2.f + spread * i / 29.f;
-        ret.push_back(v + r * sf::Vector2f(std::cos(arg), -std::sin(arg)));
+        ret.push_back(v + r * sf::Vector2f(std::cos(arg), std::sin(arg)));
     }
 
     return ret;
